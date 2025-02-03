@@ -33,10 +33,10 @@ import (
 
 type BackupAdministrationService interface {
 	CollectBackup(ctx context.Context, logicalDatabases []string, keepFromRequest string, allowEviction bool) dto.DatabaseAdapterBaseTrack
-	TrackBackup(ctx context.Context, trackId string) dto.DatabaseAdapterBaseTrack
+	TrackBackup(ctx context.Context, trackId string) (dto.DatabaseAdapterBaseTrack, bool)
 	// RestoreBackup May return 501 "Cannot restore backup without explicitly specified list of databases in it"
 	RestoreBackup(ctx context.Context, backupId string, logicalDatabases []dto.DbInfo, regenerateNames, oldNameFormat bool) (*dto.DatabaseAdapterRestoreTrack, error)
-	TrackRestore(ctx context.Context, trackId string) dto.DatabaseAdapterRestoreTrack
+	TrackRestore(ctx context.Context, trackId string) (dto.DatabaseAdapterRestoreTrack, bool)
 	EvictBackup(ctx context.Context, backupId string) string
 }
 
@@ -103,6 +103,8 @@ func (d DefaultBackupAdministrationImpl) ReadResponseBody(ctx context.Context, r
 		body, err := io.ReadAll(response.Body)
 		utils.PanicError(err, logger.Error, "Failed reading response from backup agent")
 		return response.StatusCode, body
+	} else if response.StatusCode == http.StatusNotFound {
+		return response.StatusCode, nil
 	} else {
 		panic(fmt.Sprintf("Failed: Backup daemon responded with status: %v", response.StatusCode))
 	}
@@ -134,13 +136,16 @@ func (d DefaultBackupAdministrationImpl) CollectBackup(ctx context.Context, logi
 	return dto.GetDatabaseAdapterBackupActionTrack(dto.ProceedingTrackStatus, string(body))
 }
 
-func (d DefaultBackupAdministrationImpl) TrackBackup(ctx context.Context, trackId string) dto.DatabaseAdapterBaseTrack {
+func (d DefaultBackupAdministrationImpl) TrackBackup(ctx context.Context, trackId string) (dto.DatabaseAdapterBaseTrack, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
-	_, body := d.ReadResponseBody(ctx, d.SendBackupRequest(ctx, http.MethodGet, "/jobstatus/"+trackId, nil))
+	statusCode, body := d.ReadResponseBody(ctx, d.SendBackupRequest(ctx, http.MethodGet, "/jobstatus/"+trackId, nil))
+	if statusCode == http.StatusNotFound {
+		return dto.DatabaseAdapterBaseTrack{}, false
+	}
 	var response dto.BackupTask
 	err := json.Unmarshal(body, &response)
 	utils.PanicError(err, logger.Error, "Failed parsing backup daemon response")
-	return dto.GetDatabaseAdapterBackupActionTrackByTask(response)
+	return dto.GetDatabaseAdapterBackupActionTrackByTask(response), true
 }
 
 func (d DefaultBackupAdministrationImpl) RegenerateDbName(dbName string) string {
@@ -192,13 +197,16 @@ func (d DefaultBackupAdministrationImpl) RestoreBackup(ctx context.Context, back
 	return &track, nil
 }
 
-func (d DefaultBackupAdministrationImpl) TrackRestore(ctx context.Context, trackId string) dto.DatabaseAdapterRestoreTrack {
+func (d DefaultBackupAdministrationImpl) TrackRestore(ctx context.Context, trackId string) (dto.DatabaseAdapterRestoreTrack, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
-	_, body := d.ReadResponseBody(ctx, d.SendBackupRequest(ctx, http.MethodGet, "/jobstatus/"+trackId, nil))
+	statusCode, body := d.ReadResponseBody(ctx, d.SendBackupRequest(ctx, http.MethodGet, "/jobstatus/"+trackId, nil))
+	if statusCode == http.StatusNotFound {
+		return dto.DatabaseAdapterRestoreTrack{}, false
+	}
 	var response dto.BackupTask
 	err := json.Unmarshal(body, &response)
 	utils.PanicError(err, logger.Error, "Failed parsing backup daemon response")
-	return dto.GetDatabaseAdapterRestoreActionTrackByTask(response)
+	return dto.GetDatabaseAdapterRestoreActionTrackByTask(response), true
 }
 
 func (d DefaultBackupAdministrationImpl) EvictBackup(ctx context.Context, backupId string) string {

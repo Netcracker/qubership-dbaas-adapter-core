@@ -315,8 +315,11 @@ func (h *DbaasAdapterHandler) Collect(c *fiber.Ctx) error {
 func (h *DbaasAdapterHandler) TrackBackup(c *fiber.Ctx) error {
 	trackId := c.Params("trackId")
 	ctx := getRequestContext(c)
-	track := h.backupService.TrackBackup(ctx, trackId)
+	track, found := h.backupService.TrackBackup(ctx, trackId)
 	h.logger.Debug(fmt.Sprintf("Track: %+v", track))
+	if !found {
+		return c.Status(fiber.StatusNotFound).SendString("Backup process not found")
+	}
 	return c.JSON(track)
 }
 
@@ -334,8 +337,11 @@ func (h *DbaasAdapterHandler) TrackBackup(c *fiber.Ctx) error {
 func (h *DbaasAdapterHandler) TrackRestore(c *fiber.Ctx) error {
 	trackId := c.Params("trackId")
 	ctx := getRequestContext(c)
-	track := h.backupService.TrackRestore(ctx, trackId)
+	track, found := h.backupService.TrackRestore(ctx, trackId)
 	h.logger.Debug(fmt.Sprintf("Track: %+v", track))
+	if !found {
+		return c.Status(fiber.StatusNotFound).SendString("Restore process not found")
+	}
 	return c.JSON(track)
 }
 
