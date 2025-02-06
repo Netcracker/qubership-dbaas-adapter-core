@@ -212,7 +212,7 @@ func (d DefaultBackupAdministrationImpl) TrackRestore(ctx context.Context, track
 func (d DefaultBackupAdministrationImpl) EvictBackup(ctx context.Context, backupId string) (string, bool) {
 	statusCode, body := d.ReadResponseBody(ctx, d.SendBackupRequest(ctx, http.MethodPost, "/evict/"+backupId, nil))
 	if statusCode == http.StatusNotFound {
-		return fmt.Sprintf("404 Not Found: Backup with ID %s does not exist.", backupId), false
+		return "", false
 	}
 	return string(body), true
 }

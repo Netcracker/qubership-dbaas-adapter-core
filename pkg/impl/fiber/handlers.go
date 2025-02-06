@@ -451,7 +451,7 @@ func (h *DbaasAdapterHandler) DeleteBackup(c *fiber.Ctx) error {
 	backup, found := h.backupService.EvictBackup(ctx, backupId)
 	h.logger.Debug(fmt.Sprintf("backup: %s", backup))
 	if !found {
-		return c.Status(fiber.StatusNotFound).SendString("Delete Backup process not found")
+		return c.Status(fiber.StatusNotFound).SendString("Backup not found")
 	}
 	return c.SendString(backup)
 }
