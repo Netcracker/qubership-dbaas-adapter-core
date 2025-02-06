@@ -448,7 +448,12 @@ func (h *DbaasAdapterHandler) Restore(c *fiber.Ctx) error {
 func (h *DbaasAdapterHandler) DeleteBackup(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
 	ctx := getRequestContext(c)
-	return c.SendString(h.backupService.EvictBackup(ctx, backupId))
+	backup, found := h.backupService.EvictBackup(ctx, backupId)
+	h.logger.Debug(fmt.Sprintf("backup: %s", backup))
+	if !found {
+		return c.Status(fiber.StatusNotFound).SendString("Delete Backup process not found")
+	}
+	return c.SendString(backup)
 }
 
 // Migrate DB password to vault godoc

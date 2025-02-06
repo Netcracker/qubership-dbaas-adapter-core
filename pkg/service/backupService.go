@@ -37,7 +37,7 @@ type BackupAdministrationService interface {
 	// RestoreBackup May return 501 "Cannot restore backup without explicitly specified list of databases in it"
 	RestoreBackup(ctx context.Context, backupId string, logicalDatabases []dto.DbInfo, regenerateNames, oldNameFormat bool) (*dto.DatabaseAdapterRestoreTrack, error)
 	TrackRestore(ctx context.Context, trackId string) (dto.DatabaseAdapterRestoreTrack, bool)
-	EvictBackup(ctx context.Context, backupId string) string
+	EvictBackup(ctx context.Context, backupId string) (string, bool)
 }
 
 type DefaultBackupAdministrationImpl struct {
@@ -209,9 +209,12 @@ func (d DefaultBackupAdministrationImpl) TrackRestore(ctx context.Context, track
 	return dto.GetDatabaseAdapterRestoreActionTrackByTask(response), true
 }
 
-func (d DefaultBackupAdministrationImpl) EvictBackup(ctx context.Context, backupId string) string {
-	_, body := d.ReadResponseBody(ctx, d.SendBackupRequest(ctx, http.MethodPost, "/evict/"+backupId, nil))
-	return string(body)
+func (d DefaultBackupAdministrationImpl) EvictBackup(ctx context.Context, backupId string) (string, bool) {
+	statusCode, body := d.ReadResponseBody(ctx, d.SendBackupRequest(ctx, http.MethodPost, "/evict/"+backupId, nil))
+	if statusCode == http.StatusNotFound {
+		return fmt.Sprintf("404 Not Found: Backup with ID %s does not exist.", backupId), false
+	}
+	return string(body), true
 }
 
 func (d DefaultBackupAdministrationImpl) getMaxDbLength() int {
