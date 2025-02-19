@@ -183,6 +183,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/dao.DatabaseAdapterBaseTrack"
                         }
                     },
+                    "404": {
+                        "description": "Status not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "Unknown error",
                         "schema": {
@@ -243,6 +249,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/dao.DatabaseAdapterBaseTrack"
+                        }
+                    },
+                    "404": {
+                        "description": "Status not found",
+                        "schema": {
+                            "type": "string"
                         }
                     },
                     "500": {
@@ -306,6 +318,12 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "Succesfull delete",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Status not found",
                         "schema": {
                             "type": "string"
                         }

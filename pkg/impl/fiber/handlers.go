@@ -310,6 +310,7 @@ func (h *DbaasAdapterHandler) Collect(c *fiber.Ctx) error {
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Param trackId path string true "trackId"
 // @Success 200 {object} dto.DatabaseAdapterBaseTrack
+// @Success 404 {string} Token "Status not found"
 // @Failure 500 {string} Token "Unknown error"
 // @Router /{appName}/backups/track/backup/{trackId} [get]
 func (h *DbaasAdapterHandler) TrackBackup(c *fiber.Ctx) error {
@@ -332,6 +333,7 @@ func (h *DbaasAdapterHandler) TrackBackup(c *fiber.Ctx) error {
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Param trackId path string true "trackId"
 // @Success 200 {object} dto.DatabaseAdapterBaseTrack
+// @Success 404 {string} Token "Status not found"
 // @Failure 500 {string} Token "Unknown error"
 // @Router /{appName}/backups/track/restore/{trackId} [get]
 func (h *DbaasAdapterHandler) TrackRestore(c *fiber.Ctx) error {
@@ -443,6 +445,7 @@ func (h *DbaasAdapterHandler) Restore(c *fiber.Ctx) error {
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Param backupId path string true "trackId"
 // @Success 200 {string} Token "Succesfull delete"
+// @Success 404 {string} Token "Status not found"
 // @Failure 500 {string} Token "Unknown error"
 // @Router /{appName}/backups/{backupId} [delete]
 func (h *DbaasAdapterHandler) DeleteBackup(c *fiber.Ctx) error {

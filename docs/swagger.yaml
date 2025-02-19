@@ -211,6 +211,10 @@ paths:
           description: Succesfull delete
           schema:
             type: string
+        "404":
+          description: Status not found
+          schema:
+            type: string
         "500":
           description: Unknown error
           schema:
@@ -430,6 +434,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/dao.DatabaseAdapterBaseTrack'
+        "404":
+          description: Status not found
+          schema:
+            type: string
         "500":
           description: Unknown error
           schema:
@@ -474,6 +482,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/dao.DatabaseAdapterBaseTrack'
+        "404":
+          description: Status not found
+          schema:
+            type: string
         "500":
           description: Unknown error
           schema:
