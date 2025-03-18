@@ -23,6 +23,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/docker/distribution/uuid"
 
@@ -39,6 +41,8 @@ type BackupAdministrationService interface {
 	TrackRestore(ctx context.Context, trackId string) (dto.DatabaseAdapterRestoreTrack, bool)
 	EvictBackup(ctx context.Context, backupId string) (string, bool)
 }
+
+var generatorMutex = sync.Mutex{}
 
 type DefaultBackupAdministrationImpl struct {
 	logger         *zap.Logger
@@ -162,29 +166,24 @@ func (d DefaultBackupAdministrationImpl) RestoreBackup(ctx context.Context, back
 	if !d.fullRestore && len(logicalDatabases) < 1 {
 		return nil, &dto.BackupRestoresOnlySpecifiedDBsError{}
 	}
-	var changedDbNames map[string]string
+	changedDbNames := make(map[string]string)
 	if regenerateNames {
 		if d.fullRestore {
 			panic("DBs name regeneration is not supported without specified DBs list")
 		}
-		changedDbNames = make(map[string]string)
+
 		var err error
+		var newDbName string
 		for _, db := range logicalDatabases {
-			var name string
-			if oldNameFormat {
-				name = d.RegenerateDbName(db.Name)
-			} else if db.Prefix != nil {
-				name = utils.RegenerateDbName(*db.Prefix, d.getMaxDbLength())
-			} else {
-				name, err = utils.PrepareDatabaseName(db.Namespace, db.Microservice, d.getMaxDbLength())
-				if err != nil {
-					panic(fmt.Sprintf("cannot generate new dbName for %v", db))
-				}
+			newDbName, err = d.generateNewDBName(db, oldNameFormat)
+			if err != nil {
+				panic(fmt.Sprintf("cannot generate new dbName for %v", db))
 			}
+
 			for _, specialSymbol := range d.specialSymbols {
-				name = strings.ReplaceAll(name, specialSymbol, "_")
+				newDbName = strings.ReplaceAll(newDbName, specialSymbol, "_")
 			}
-			changedDbNames[db.Name] = name
+			changedDbNames[db.Name] = newDbName
 		}
 	}
 	request := dto.RestoreRequest{
@@ -195,6 +194,25 @@ func (d DefaultBackupAdministrationImpl) RestoreBackup(ctx context.Context, back
 	_, body := d.ReadResponseBody(ctx, d.SendBackupRequest(ctx, http.MethodPost, "/restore", request))
 	track := dto.GetDatabaseAdapterRestoreActionTrack(dto.ProceedingTrackStatus, string(body), changedDbNames)
 	return &track, nil
+}
+
+func (d DefaultBackupAdministrationImpl) generateNewDBName(db dto.DbInfo, oldNameFormat bool) (newDbName string, err error) {
+	generatorMutex.Lock()
+	defer generatorMutex.Unlock()
+	// perform sleep to avoid timestamp collision
+	time.Sleep(1 * time.Millisecond)
+
+	if oldNameFormat {
+		newDbName = d.RegenerateDbName(db.Name)
+	} else if db.Prefix != nil {
+		newDbName = utils.RegenerateDbName(*db.Prefix, d.getMaxDbLength())
+	} else {
+		newDbName, err = utils.PrepareDatabaseName(db.Namespace, db.Microservice, d.getMaxDbLength())
+		if err != nil {
+			return newDbName, err
+		}
+	}
+	return newDbName, nil
 }
 
 func (d DefaultBackupAdministrationImpl) TrackRestore(ctx context.Context, trackId string) (dto.DatabaseAdapterRestoreTrack, bool) {
