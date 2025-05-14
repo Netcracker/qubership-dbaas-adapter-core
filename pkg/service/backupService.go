@@ -97,16 +97,6 @@ func (d DefaultBackupAdministrationImpl) SendBackupRequest(ctx context.Context, 
 	utils.PanicError(errs, logger.Error, "Failed to send request to backup")
 	logger.Info(fmt.Sprintf("Received response with status: %s", res.Status))
 
-	body, err := io.ReadAll(res.Body)
-	defer res.Body.Close()
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to read response body: %v", err))
-	} else {
-		logger.Info(fmt.Sprintf("Response body SendBackupRequest*****: %s", string(body)))
-	}
-
-	res.Body = io.NopCloser(bytes.NewBuffer(body))
-
 	return res
 
 }
@@ -153,8 +143,17 @@ func (d DefaultBackupAdministrationImpl) CollectBackup(ctx context.Context, logi
 
 func (d DefaultBackupAdministrationImpl) TrackBackup(ctx context.Context, trackId string) (dto.DatabaseAdapterBaseTrack, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
+	res := d.SendBackupRequest(ctx, http.MethodGet, "/jobstatus/"+trackId, nil)
+
+	body, errs := io.ReadAll(res.Body)
+	if errs != nil {
+		logger.Error("Failed to read response body", zap.Error(errs))
+	}
+	res.Body.Close()
+
+	logger.Info(fmt.Sprintf("Response body: %s", string(body)))
 	statusCode, body := d.ReadResponseBody(ctx, d.SendBackupRequest(ctx, http.MethodGet, "/jobstatus/"+trackId, nil))
-	logger.Info(fmt.Sprintf("Received TrackBackup  status: %s", statusCode))
+	//logger.Info(fmt.Sprintf("Received TrackBackup  status: %d", statusCode))
 	if statusCode == http.StatusNotFound {
 		return dto.DatabaseAdapterBaseTrack{}, false
 	}
