@@ -97,7 +97,18 @@ func (d DefaultBackupAdministrationImpl) SendBackupRequest(ctx context.Context, 
 	utils.PanicError(errs, logger.Error, "Failed to send request to backup")
 	logger.Info(fmt.Sprintf("Received response with status: %s", res.Status))
 
+	body, err := io.ReadAll(res.Body)
+	defer res.Body.Close()
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to read response body: %v", err))
+	} else {
+		logger.Info(fmt.Sprintf("Response body SendBackupRequest*****: %s", string(body)))
+	}
+
+	res.Body = io.NopCloser(bytes.NewBuffer(body))
+
 	return res
+
 }
 
 func (d DefaultBackupAdministrationImpl) ReadResponseBody(ctx context.Context, response *http.Response) (int, []byte) {
@@ -143,6 +154,7 @@ func (d DefaultBackupAdministrationImpl) CollectBackup(ctx context.Context, logi
 func (d DefaultBackupAdministrationImpl) TrackBackup(ctx context.Context, trackId string) (dto.DatabaseAdapterBaseTrack, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 	statusCode, body := d.ReadResponseBody(ctx, d.SendBackupRequest(ctx, http.MethodGet, "/jobstatus/"+trackId, nil))
+	logger.Info(fmt.Sprintf("Received TrackBackup  status: %s", statusCode))
 	if statusCode == http.StatusNotFound {
 		return dto.DatabaseAdapterBaseTrack{}, false
 	}
@@ -218,6 +230,7 @@ func (d DefaultBackupAdministrationImpl) generateNewDBName(db dto.DbInfo, oldNam
 func (d DefaultBackupAdministrationImpl) TrackRestore(ctx context.Context, trackId string) (dto.DatabaseAdapterRestoreTrack, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 	statusCode, body := d.ReadResponseBody(ctx, d.SendBackupRequest(ctx, http.MethodGet, "/jobstatus/"+trackId, nil))
+
 	if statusCode == http.StatusNotFound {
 		return dto.DatabaseAdapterRestoreTrack{}, false
 	}
@@ -233,6 +246,7 @@ func (d DefaultBackupAdministrationImpl) EvictBackup(ctx context.Context, backup
 		return "", false
 	}
 	return string(body), true
+
 }
 
 func (d DefaultBackupAdministrationImpl) getMaxDbLength() int {
