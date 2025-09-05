@@ -24,6 +24,7 @@ type BackgroundExecutor struct {
 	queue  chan func()
 	active bool
 	mutex  sync.Mutex
+	once   sync.Once
 }
 
 // NewBackgroundExecutor creates new BackgroundExecutor instance and starts goroutine which monitors it's task queue.
@@ -47,12 +48,14 @@ func (executor *BackgroundExecutor) Submit(work func()) {
 // Shutdown deactivates the BackgroundExecutor so it will no longer accept work for submitting. All the works that have
 // been already submitted will be executed and finished as usual.
 func (executor *BackgroundExecutor) Shutdown() {
-	defer executor.mutex.Unlock()
-	executor.mutex.Lock()
-	if executor.active {
-		executor.active = false
-		close(executor.queue)
-	}
+	executor.once.Do(func() {
+		executor.mutex.Lock()
+		defer executor.mutex.Unlock()
+		if executor.active {
+			executor.active = false
+			close(executor.queue)
+		}
+	})
 }
 
 // Starts taking work from queue and running it until the task channel is closed.

@@ -42,7 +42,7 @@ type PhysicalDatabaseRegistrationService struct {
 
 	// mutex is used to synchronize concurrent registrations.
 	mutex       sync.Mutex
-	executor    helper.BackgroundExecutor
+	executor    *helper.BackgroundExecutor
 	loopContext context.Context
 	status      entity.Status
 }
@@ -74,7 +74,7 @@ func NewPhysicalRegistrationService(
 		registrationFixedDelay: registrationFixedDelay,
 		registrationRetryTime:  registrationRetryTime,
 		registrationRetryDelay: registrationRetryDelay,
-		executor:               *helper.NewBackgroundExecutor(),
+		executor:               helper.NewBackgroundExecutor(),
 		administrationService:  administrationService,
 		loopContext:            context,
 		status:                 entity.StatusRunning,
