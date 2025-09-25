@@ -42,11 +42,11 @@ type BackupAdministrationService interface {
 	EvictBackup(ctx context.Context, backupId string) (string, bool)
 
 	CollectBackupNew(ctx context.Context, storageName, blobPath string, databaseNames []string) (*dto.BackupResponse, bool)
-	TrackBackupNew(ctx context.Context, backupId string) (*dto.BackupResponse, bool)
-	EvictBackupNew(ctx context.Context, backupId string) bool
+	TrackBackupNew(ctx context.Context, backupId, blobPath string) (*dto.BackupResponse, bool)
+	EvictBackupNew(ctx context.Context, backupId, blobPath string) bool
 	RestoreBackupNew(ctx context.Context, backupId string, restoreRequest dto.CreateRestoreRequest, dryRun bool) (*dto.RestoreResponse, bool)
-	TrackRestoreNew(ctx context.Context, restoreId string) (*dto.RestoreResponse, bool)
-	EvictRestoreNew(ctx context.Context, restoreId string) bool
+	TrackRestoreNew(ctx context.Context, restoreId, blobPath string) (*dto.RestoreResponse, bool)
+	EvictRestoreNew(ctx context.Context, restoreId, blobPath string) bool
 }
 
 var generatorMutex = sync.Mutex{}

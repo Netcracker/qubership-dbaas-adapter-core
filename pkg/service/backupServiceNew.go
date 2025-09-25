@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	dto "github.com/Netcracker/qubership-dbaas-adapter-core/pkg/dao"
 	"github.com/Netcracker/qubership-dbaas-adapter-core/pkg/utils"
@@ -78,10 +79,16 @@ func (d DefaultBackupAdministrationImpl) CollectBackupNew(ctx context.Context, s
 }
 
 // TrackBackupNew retrieves details about a specific backup operation
-func (d DefaultBackupAdministrationImpl) TrackBackupNew(ctx context.Context, backupId string) (*dto.BackupResponse, bool) {
+func (d DefaultBackupAdministrationImpl) TrackBackupNew(ctx context.Context, backupId, blobPath string) (*dto.BackupResponse, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 
-	res, err := http.Get(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, backupId))
+	// res, err := http.Get(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, backupId))
+	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(backupId)))
+	q := u.Query()
+	q.Set("blobPath", blobPath)
+	u.RawQuery = q.Encode()
+	req, _ := http.NewRequest(http.MethodGet, u.String(), nil)
+	res, err := d.client.Do(req)
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to get backup status")
 	}
@@ -109,9 +116,14 @@ func (d DefaultBackupAdministrationImpl) TrackBackupNew(ctx context.Context, bac
 	return backupResponse, true
 }
 
-func (d DefaultBackupAdministrationImpl) EvictBackupNew(ctx context.Context, backupId string) bool {
+func (d DefaultBackupAdministrationImpl) EvictBackupNew(ctx context.Context, backupId, blobPath string) bool {
 	logger := utils.AddLoggerContext(d.logger, ctx)
-	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, backupId), nil)
+	// req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, backupId), nil)
+	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(backupId)))
+	q := u.Query()
+	q.Set("blobPath", blobPath)
+	u.RawQuery = q.Encode()
+	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to create request")
 	}
@@ -194,10 +206,16 @@ func (d DefaultBackupAdministrationImpl) RestoreBackupNew(ctx context.Context, b
 }
 
 // TrackRestoreNew retrieves details about a specific restore operation
-func (d DefaultBackupAdministrationImpl) TrackRestoreNew(ctx context.Context, restoreId string) (*dto.RestoreResponse, bool) {
+func (d DefaultBackupAdministrationImpl) TrackRestoreNew(ctx context.Context, restoreId, blobPath string) (*dto.RestoreResponse, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 
-	res, err := http.Get(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId))
+	// res, err := http.Get(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId))
+	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(restoreId)))
+	q := u.Query()
+	q.Set("blobPath", blobPath)
+	u.RawQuery = q.Encode()
+	req, _ := http.NewRequest(http.MethodGet, u.String(), nil)
+	res, err := d.client.Do(req)
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to get restore status")
 	}
@@ -226,9 +244,14 @@ func (d DefaultBackupAdministrationImpl) TrackRestoreNew(ctx context.Context, re
 }
 
 // EvictRestoreNew deletes a restore operation
-func (d DefaultBackupAdministrationImpl) EvictRestoreNew(ctx context.Context, restoreId string) bool {
+func (d DefaultBackupAdministrationImpl) EvictRestoreNew(ctx context.Context, restoreId, blobPath string) bool {
 	logger := utils.AddLoggerContext(d.logger, ctx)
-	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId), nil)
+	// req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId), nil)
+	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(restoreId)))
+	q := u.Query()
+	q.Set("blobPath", blobPath)
+	u.RawQuery = q.Encode()
+	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to create request")
 	}

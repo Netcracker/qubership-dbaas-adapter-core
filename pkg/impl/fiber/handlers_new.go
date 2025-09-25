@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	dto "github.com/Netcracker/qubership-dbaas-adapter-core/pkg/dao"
 	utilsCore "github.com/Netcracker/qubership-dbaas-adapter-core/pkg/utils"
@@ -13,6 +14,21 @@ import (
 )
 
 var validate = validator.New()
+
+type blobPathQuery struct {
+	BlobPath string `query:"blobPath" validate:"required"`
+}
+
+func requireBlobPath(c *fiber.Ctx) (string, error) {
+	var q blobPathQuery
+	if err := c.QueryParser(&q); err != nil {
+		return "", fiber.NewError(fiber.StatusBadRequest, "invalid query")
+	}
+	if err := validate.Struct(q); err != nil {
+		return "", fiber.NewError(fiber.StatusBadRequest, "query parameter 'blobPath' is required")
+	}
+	return strings.TrimSpace(q.BlobPath), nil
+}
 
 // CollectNew initiates a new backup operation
 // @Tags Backup and Restore
@@ -83,6 +99,10 @@ func (h *DbaasAdapterHandler) CollectNew(c *fiber.Ctx) error {
 // @Router /{appName}/backups/backup/{backupId} [get]
 func (h *DbaasAdapterHandler) TrackBackupNew(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
+	blobPath, err := requireBlobPath(c)
+	if err != nil {
+		return err
+	}
 
 	ctx := getRequestContext(c)
 
@@ -90,7 +110,7 @@ func (h *DbaasAdapterHandler) TrackBackupNew(c *fiber.Ctx) error {
 
 	h.logger.Debug(fmt.Sprintf("Get backup request for ID: %s", backupId))
 
-	backupResponse, found := h.backupService.TrackBackupNew(ctx, backupId)
+	backupResponse, found := h.backupService.TrackBackupNew(ctx, backupId, blobPath)
 	if !found {
 		h.logger.Info("Backup not found", zap.String("backupId", backupId))
 		return c.Status(fiber.StatusNotFound).SendString("Backup not found")
@@ -113,13 +133,17 @@ func (h *DbaasAdapterHandler) TrackBackupNew(c *fiber.Ctx) error {
 // @Router /{appName}/backups/backup/{backupId} [delete]
 func (h *DbaasAdapterHandler) DeleteBackupNew(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
+	blobPath, err := requireBlobPath(c)
+	if err != nil {
+		return err
+	}
 	ctx := getRequestContext(c)
 
 	defer h.handlePanicRecovery(c, ctx, "DeleteBackupNew")
 
 	h.logger.Debug(fmt.Sprintf("Delete backup request for ID: %s", backupId))
 
-	found := h.backupService.EvictBackupNew(ctx, backupId)
+	found := h.backupService.EvictBackupNew(ctx, backupId, blobPath)
 	if !found {
 		h.logger.Info("Backup not found", zap.String("backupId", backupId))
 		return c.Status(fiber.StatusNotFound).SendString("Backup not found")
@@ -194,13 +218,17 @@ func (h *DbaasAdapterHandler) RestoreBackupNew(c *fiber.Ctx) error {
 // @Router /{appName}/backups/restore/{restoreId} [get]
 func (h *DbaasAdapterHandler) TrackRestoreNew(c *fiber.Ctx) error {
 	restoreId := c.Params("restoreId")
+	blobPath, err := requireBlobPath(c)
+	if err != nil {
+		return err
+	}
 	ctx := getRequestContext(c)
 
 	defer h.handlePanicRecovery(c, ctx, "GetRestore")
 
 	h.logger.Debug(fmt.Sprintf("Get restore request for ID: %s", restoreId))
 
-	restoreResponse, found := h.backupService.TrackRestoreNew(ctx, restoreId)
+	restoreResponse, found := h.backupService.TrackRestoreNew(ctx, restoreId, blobPath)
 	if !found {
 		h.logger.Info("Restore not found", zap.String("restoreId", restoreId))
 		return c.Status(fiber.StatusNotFound).SendString("Restore not found")
@@ -223,13 +251,17 @@ func (h *DbaasAdapterHandler) TrackRestoreNew(c *fiber.Ctx) error {
 // @Router /{appName}/backups/restore/{restoreId} [delete]
 func (h *DbaasAdapterHandler) DeleteRestoreNew(c *fiber.Ctx) error {
 	restoreId := c.Params("restoreId")
+	blobPath, err := requireBlobPath(c)
+	if err != nil {
+		return err
+	}
 	ctx := getRequestContext(c)
 
 	defer h.handlePanicRecovery(c, ctx, "DeleteRestore")
 
 	h.logger.Debug(fmt.Sprintf("Delete restore request for ID: %s", restoreId))
 
-	found := h.backupService.EvictRestoreNew(ctx, restoreId)
+	found := h.backupService.EvictRestoreNew(ctx, restoreId, blobPath)
 	if !found {
 		h.logger.Info("Restore not found", zap.String("restoreId", restoreId))
 		return c.Status(fiber.StatusNotFound).SendString("Restore not found")
