@@ -40,6 +40,13 @@ type BackupAdministrationService interface {
 	RestoreBackup(ctx context.Context, backupId string, logicalDatabases []dto.DbInfo, regenerateNames, oldNameFormat bool) (*dto.DatabaseAdapterRestoreTrack, error)
 	TrackRestore(ctx context.Context, trackId string) (dto.DatabaseAdapterRestoreTrack, bool)
 	EvictBackup(ctx context.Context, backupId string) (string, bool)
+
+	CollectBackupV2(ctx context.Context, storageName, blobPath string, databaseNames []string) (*dto.BackupResponse, bool)
+	TrackBackupV2(ctx context.Context, backupId, blobPath string) (*dto.BackupResponse, bool)
+	EvictBackupV2(ctx context.Context, backupId, blobPath string) bool
+	RestoreBackupV2(ctx context.Context, backupId string, restoreRequest dto.CreateRestoreRequest, dryRun bool) (*dto.RestoreResponse, bool)
+	TrackRestoreV2(ctx context.Context, restoreId, blobPath string) (*dto.RestoreResponse, bool)
+	EvictRestoreV2(ctx context.Context, restoreId, blobPath string) bool
 }
 
 var generatorMutex = sync.Mutex{}
