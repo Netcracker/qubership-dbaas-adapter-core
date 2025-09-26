@@ -18,11 +18,11 @@ const (
 	backupAPIv1 = "api/v1"
 )
 
-// CollectBackupNew creates a new backup with the specified parameters
-func (d DefaultBackupAdministrationImpl) CollectBackupNew(ctx context.Context, storageName, blobPath string, databaseNames []string) (*dto.BackupResponse, bool) {
+// CollectBackupV2 creates a new backup with the specified parameters
+func (d DefaultBackupAdministrationImpl) CollectBackupV2(ctx context.Context, storageName, blobPath string, databaseNames []string) (*dto.BackupResponse, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 
-	request := dto.BackupRequestNew{
+	request := dto.BackupRequestV2{
 		StorageName: storageName,
 		BlobPath:    blobPath,
 		Databases:   databaseNames,
@@ -78,8 +78,8 @@ func (d DefaultBackupAdministrationImpl) CollectBackupNew(ctx context.Context, s
 	return backupResponse, true
 }
 
-// TrackBackupNew retrieves details about a specific backup operation
-func (d DefaultBackupAdministrationImpl) TrackBackupNew(ctx context.Context, backupId, blobPath string) (*dto.BackupResponse, bool) {
+// TrackBackupV2 retrieves details about a specific backup operation
+func (d DefaultBackupAdministrationImpl) TrackBackupV2(ctx context.Context, backupId, blobPath string) (*dto.BackupResponse, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 
 	// res, err := http.Get(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, backupId))
@@ -116,7 +116,7 @@ func (d DefaultBackupAdministrationImpl) TrackBackupNew(ctx context.Context, bac
 	return backupResponse, true
 }
 
-func (d DefaultBackupAdministrationImpl) EvictBackupNew(ctx context.Context, backupId, blobPath string) bool {
+func (d DefaultBackupAdministrationImpl) EvictBackupV2(ctx context.Context, backupId, blobPath string) bool {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 	// req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, backupId), nil)
 	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(backupId)))
@@ -149,8 +149,8 @@ func (d DefaultBackupAdministrationImpl) EvictBackupNew(ctx context.Context, bac
 	return true
 }
 
-// RestoreBackupNew creates a new restore operation from a backup
-func (d DefaultBackupAdministrationImpl) RestoreBackupNew(ctx context.Context, backupId string, restoreRequest dto.CreateRestoreRequest, dryRun bool) (*dto.RestoreResponse, bool) {
+// RestoreBackupV2 creates a new restore operation from a backup
+func (d DefaultBackupAdministrationImpl) RestoreBackupV2(ctx context.Context, backupId string, restoreRequest dto.CreateRestoreRequest, dryRun bool) (*dto.RestoreResponse, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 
 	databases := make([]dto.DaemonRestoreMapping, len(restoreRequest.Databases))
@@ -167,7 +167,7 @@ func (d DefaultBackupAdministrationImpl) RestoreBackupNew(ctx context.Context, b
 		})
 	}
 
-	request := dto.RestoreRequestNew{
+	request := dto.RestoreRequestV2{
 		StorageName: restoreRequest.StorageName,
 		BlobPath:    restoreRequest.BlobPath,
 		Databases:   databases,
@@ -205,8 +205,8 @@ func (d DefaultBackupAdministrationImpl) RestoreBackupNew(ctx context.Context, b
 	return restoreResponse, true
 }
 
-// TrackRestoreNew retrieves details about a specific restore operation
-func (d DefaultBackupAdministrationImpl) TrackRestoreNew(ctx context.Context, restoreId, blobPath string) (*dto.RestoreResponse, bool) {
+// TrackRestoreV2 retrieves details about a specific restore operation
+func (d DefaultBackupAdministrationImpl) TrackRestoreV2(ctx context.Context, restoreId, blobPath string) (*dto.RestoreResponse, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 
 	// res, err := http.Get(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId))
@@ -243,8 +243,8 @@ func (d DefaultBackupAdministrationImpl) TrackRestoreNew(ctx context.Context, re
 	return restoreResponse, true
 }
 
-// EvictRestoreNew deletes a restore operation
-func (d DefaultBackupAdministrationImpl) EvictRestoreNew(ctx context.Context, restoreId, blobPath string) bool {
+// EvictRestoreV2 deletes a restore operation
+func (d DefaultBackupAdministrationImpl) EvictRestoreV2(ctx context.Context, restoreId, blobPath string) bool {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 	// req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId), nil)
 	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(restoreId)))

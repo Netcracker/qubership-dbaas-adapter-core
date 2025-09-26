@@ -41,12 +41,12 @@ type BackupAdministrationService interface {
 	TrackRestore(ctx context.Context, trackId string) (dto.DatabaseAdapterRestoreTrack, bool)
 	EvictBackup(ctx context.Context, backupId string) (string, bool)
 
-	CollectBackupNew(ctx context.Context, storageName, blobPath string, databaseNames []string) (*dto.BackupResponse, bool)
-	TrackBackupNew(ctx context.Context, backupId, blobPath string) (*dto.BackupResponse, bool)
-	EvictBackupNew(ctx context.Context, backupId, blobPath string) bool
-	RestoreBackupNew(ctx context.Context, backupId string, restoreRequest dto.CreateRestoreRequest, dryRun bool) (*dto.RestoreResponse, bool)
-	TrackRestoreNew(ctx context.Context, restoreId, blobPath string) (*dto.RestoreResponse, bool)
-	EvictRestoreNew(ctx context.Context, restoreId, blobPath string) bool
+	CollectBackupV2(ctx context.Context, storageName, blobPath string, databaseNames []string) (*dto.BackupResponse, bool)
+	TrackBackupV2(ctx context.Context, backupId, blobPath string) (*dto.BackupResponse, bool)
+	EvictBackupV2(ctx context.Context, backupId, blobPath string) bool
+	RestoreBackupV2(ctx context.Context, backupId string, restoreRequest dto.CreateRestoreRequest, dryRun bool) (*dto.RestoreResponse, bool)
+	TrackRestoreV2(ctx context.Context, restoreId, blobPath string) (*dto.RestoreResponse, bool)
+	EvictRestoreV2(ctx context.Context, restoreId, blobPath string) bool
 }
 
 var generatorMutex = sync.Mutex{}

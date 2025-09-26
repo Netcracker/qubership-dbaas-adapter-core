@@ -630,12 +630,12 @@ func BuildFiberDBaaSAdapterHandlers(
 	backups.Delete(":backupId", adapterHandler.DeleteBackup)
 
 	// New backup API
-	backups.Post("/backup", adapterHandler.CollectNew)
-	backups.Get("/backup/:backupId", adapterHandler.TrackBackupNew)
-	backups.Post("/backup/:backupId/restore", adapterHandler.RestoreBackupNew)
-	backups.Get("/restore/:restoreId", adapterHandler.TrackRestoreNew)
-	backups.Delete("/backup/:backupId", adapterHandler.DeleteBackupNew)
-	backups.Delete("/restore/:restoreId", adapterHandler.DeleteRestoreNew)
+	backups.Post("/backup", adapterHandler.CollectBackupV2)
+	backups.Get("/backup/:backupId", adapterHandler.TrackBackupV2)
+	backups.Post("/backup/:backupId/restore", adapterHandler.RestoreBackupV2)
+	backups.Get("/restore/:restoreId", adapterHandler.TrackRestoreV2)
+	backups.Delete("/backup/:backupId", adapterHandler.DeleteBackupV2)
+	backups.Delete("/restore/:restoreId", adapterHandler.DeleteRestoreV2)
 
 	general.Get("/physical_database/force_registration", adapterHandler.ForceRegistration)
 

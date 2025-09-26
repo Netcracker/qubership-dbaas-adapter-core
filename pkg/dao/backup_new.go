@@ -1,7 +1,7 @@
 package dao
 
-// BackupRequestNew represents the request structure for creating backups
-type BackupRequestNew struct {
+// BackupRequestV2 represents the request structure for creating backups
+type BackupRequestV2 struct {
 	StorageName string   `json:"storageName"`
 	BlobPath    string   `json:"blobPath"`
 	Databases   []string `json:"databases"`
@@ -67,7 +67,7 @@ type CreateRestoreRequest struct {
 	Databases   []RestoreMapping `json:"databases" validate:"required,dive"`
 }
 
-type RestoreRequestNew struct {
+type RestoreRequestV2 struct {
 	StorageName string                 `json:"storageName" validate:"required"`
 	BlobPath    string                 `json:"blobPath" validate:"required"`
 	Databases   []DaemonRestoreMapping `json:"databases" validate:"required,dive"`

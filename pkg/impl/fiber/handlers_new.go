@@ -30,7 +30,7 @@ func requireBlobPath(c *fiber.Ctx) (string, error) {
 	return strings.TrimSpace(q.BlobPath), nil
 }
 
-// CollectNew initiates a new backup operation
+// CollectBackupV2 initiates a new backup operation
 // @Tags Backup and Restore
 // @Summary Initiate database backup
 // @Description Initiates a backup of specified databases and stores it in the configured storage. The operation is asynchronous and returns immediately with current status of backup.
@@ -46,7 +46,7 @@ func requireBlobPath(c *fiber.Ctx) (string, error) {
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
 // @Router /{appName}/backups [post]
-func (h *DbaasAdapterHandler) CollectNew(c *fiber.Ctx) error {
+func (h *DbaasAdapterHandler) CollectBackupV2(c *fiber.Ctx) error {
 	ctx := getRequestContext(c)
 
 	defer h.handlePanicRecovery(c, ctx, "CreateBackup")
@@ -75,7 +75,7 @@ func (h *DbaasAdapterHandler) CollectNew(c *fiber.Ctx) error {
 	}
 
 	// Call the service to create backup
-	backupResponse, found := h.backupService.CollectBackupNew(ctx, backupRequest.StorageName, backupRequest.BlobPath, databaseNames)
+	backupResponse, found := h.backupService.CollectBackupV2(ctx, backupRequest.StorageName, backupRequest.BlobPath, databaseNames)
 	if !found {
 		h.logger.Info("Database not found")
 		return c.Status(fiber.StatusNotFound).SendString("Database not found")
@@ -85,7 +85,7 @@ func (h *DbaasAdapterHandler) CollectNew(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusAccepted).JSON(backupResponse)
 }
 
-// TrackBackupNew retrieves details about a specific backup operation
+// TrackBackupV2 retrieves details about a specific backup operation
 // @Tags Backup and Restore
 // @Summary Get backup details
 // @Description Retrieve details about a specific backup operation
@@ -97,7 +97,7 @@ func (h *DbaasAdapterHandler) CollectNew(c *fiber.Ctx) error {
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
 // @Router /{appName}/backups/backup/{backupId} [get]
-func (h *DbaasAdapterHandler) TrackBackupNew(c *fiber.Ctx) error {
+func (h *DbaasAdapterHandler) TrackBackupV2(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
 	blobPath, err := requireBlobPath(c)
 	if err != nil {
@@ -110,7 +110,7 @@ func (h *DbaasAdapterHandler) TrackBackupNew(c *fiber.Ctx) error {
 
 	h.logger.Debug(fmt.Sprintf("Get backup request for ID: %s", backupId))
 
-	backupResponse, found := h.backupService.TrackBackupNew(ctx, backupId, blobPath)
+	backupResponse, found := h.backupService.TrackBackupV2(ctx, backupId, blobPath)
 	if !found {
 		h.logger.Info("Backup not found", zap.String("backupId", backupId))
 		return c.Status(fiber.StatusNotFound).SendString("Backup not found")
@@ -120,7 +120,7 @@ func (h *DbaasAdapterHandler) TrackBackupNew(c *fiber.Ctx) error {
 	return c.JSON(backupResponse)
 }
 
-// DeleteBackupNew deletes a backup operation
+// DeleteBackupV2 deletes a backup operation
 // @Tags Backup and Restore
 // @Summary Delete backup
 // @Description Delete a backup operation
@@ -131,7 +131,7 @@ func (h *DbaasAdapterHandler) TrackBackupNew(c *fiber.Ctx) error {
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
 // @Router /{appName}/backups/backup/{backupId} [delete]
-func (h *DbaasAdapterHandler) DeleteBackupNew(c *fiber.Ctx) error {
+func (h *DbaasAdapterHandler) DeleteBackupV2(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
 	blobPath, err := requireBlobPath(c)
 	if err != nil {
@@ -139,11 +139,11 @@ func (h *DbaasAdapterHandler) DeleteBackupNew(c *fiber.Ctx) error {
 	}
 	ctx := getRequestContext(c)
 
-	defer h.handlePanicRecovery(c, ctx, "DeleteBackupNew")
+	defer h.handlePanicRecovery(c, ctx, "DeleteBackupV2")
 
 	h.logger.Debug(fmt.Sprintf("Delete backup request for ID: %s", backupId))
 
-	found := h.backupService.EvictBackupNew(ctx, backupId, blobPath)
+	found := h.backupService.EvictBackupV2(ctx, backupId, blobPath)
 	if !found {
 		h.logger.Info("Backup not found", zap.String("backupId", backupId))
 		return c.Status(fiber.StatusNotFound).SendString("Backup not found")
@@ -153,7 +153,7 @@ func (h *DbaasAdapterHandler) DeleteBackupNew(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-// RestoreBackupNew restores databases from a backup
+// RestoreBackupV2 restores databases from a backup
 // @Tags Backup and Restore
 // @Summary Restore databases from backup
 // @Description Restores databases from a previously created backup. Supports dry-run mode to validate the restore operation without making changes. The operation is asynchronous and returns immediately with current status of restore.
@@ -169,12 +169,12 @@ func (h *DbaasAdapterHandler) DeleteBackupNew(c *fiber.Ctx) error {
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
 // @Router /{appName}/backups/backup/{backupId}/restore [post]
-func (h *DbaasAdapterHandler) RestoreBackupNew(c *fiber.Ctx) error {
+func (h *DbaasAdapterHandler) RestoreBackupV2(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
 	dryRun, _ := strconv.ParseBool(c.Query("dryRun", "false"))
 	ctx := getRequestContext(c)
 
-	defer h.handlePanicRecovery(c, ctx, "RestoreBackupNew")
+	defer h.handlePanicRecovery(c, ctx, "RestoreBackupV2")
 
 	var restoreRequest dto.CreateRestoreRequest
 	if err := c.BodyParser(&restoreRequest); err != nil {
@@ -194,7 +194,7 @@ func (h *DbaasAdapterHandler) RestoreBackupNew(c *fiber.Ctx) error {
 
 	h.logger.Debug(fmt.Sprintf("Restore request: %+v, dryRun: %v", restoreRequest, dryRun))
 
-	restoreResponse, found := h.backupService.RestoreBackupNew(ctx, backupId, restoreRequest, dryRun)
+	restoreResponse, found := h.backupService.RestoreBackupV2(ctx, backupId, restoreRequest, dryRun)
 	if !found {
 		h.logger.Info("Backup not found", zap.String("backupId", backupId))
 		return c.Status(fiber.StatusNotFound).SendString("Backup not found")
@@ -204,7 +204,7 @@ func (h *DbaasAdapterHandler) RestoreBackupNew(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusAccepted).JSON(restoreResponse)
 }
 
-// TrackRestoreNew retrieves details of a restore operation
+// TrackRestoreV2 retrieves details of a restore operation
 // @Tags Backup and Restore
 // @Summary Get restore details
 // @Description Retrieves details of a restore operation
@@ -216,7 +216,7 @@ func (h *DbaasAdapterHandler) RestoreBackupNew(c *fiber.Ctx) error {
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
 // @Router /{appName}/backups/restore/{restoreId} [get]
-func (h *DbaasAdapterHandler) TrackRestoreNew(c *fiber.Ctx) error {
+func (h *DbaasAdapterHandler) TrackRestoreV2(c *fiber.Ctx) error {
 	restoreId := c.Params("restoreId")
 	blobPath, err := requireBlobPath(c)
 	if err != nil {
@@ -228,7 +228,7 @@ func (h *DbaasAdapterHandler) TrackRestoreNew(c *fiber.Ctx) error {
 
 	h.logger.Debug(fmt.Sprintf("Get restore request for ID: %s", restoreId))
 
-	restoreResponse, found := h.backupService.TrackRestoreNew(ctx, restoreId, blobPath)
+	restoreResponse, found := h.backupService.TrackRestoreV2(ctx, restoreId, blobPath)
 	if !found {
 		h.logger.Info("Restore not found", zap.String("restoreId", restoreId))
 		return c.Status(fiber.StatusNotFound).SendString("Restore not found")
@@ -249,7 +249,7 @@ func (h *DbaasAdapterHandler) TrackRestoreNew(c *fiber.Ctx) error {
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
 // @Router /{appName}/backups/restore/{restoreId} [delete]
-func (h *DbaasAdapterHandler) DeleteRestoreNew(c *fiber.Ctx) error {
+func (h *DbaasAdapterHandler) DeleteRestoreV2(c *fiber.Ctx) error {
 	restoreId := c.Params("restoreId")
 	blobPath, err := requireBlobPath(c)
 	if err != nil {
@@ -261,7 +261,7 @@ func (h *DbaasAdapterHandler) DeleteRestoreNew(c *fiber.Ctx) error {
 
 	h.logger.Debug(fmt.Sprintf("Delete restore request for ID: %s", restoreId))
 
-	found := h.backupService.EvictRestoreNew(ctx, restoreId, blobPath)
+	found := h.backupService.EvictRestoreV2(ctx, restoreId, blobPath)
 	if !found {
 		h.logger.Info("Restore not found", zap.String("restoreId", restoreId))
 		return c.Status(fiber.StatusNotFound).SendString("Restore not found")
