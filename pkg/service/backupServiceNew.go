@@ -153,7 +153,7 @@ func (d DefaultBackupAdministrationImpl) EvictBackupV2(ctx context.Context, back
 func (d DefaultBackupAdministrationImpl) RestoreBackupV2(ctx context.Context, backupId string, restoreRequest dto.CreateRestoreRequest, dryRun bool) (*dto.RestoreResponse, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 
-	databases := make([]dto.DaemonRestoreMapping, len(restoreRequest.Databases))
+	databases := make([]dto.DaemonRestoreMapping, 0, len(restoreRequest.Databases))
 
 	for _, database := range restoreRequest.Databases {
 		dbInfo := convertRestoreRequestToDbInfo(database)
@@ -210,7 +210,7 @@ func (d DefaultBackupAdministrationImpl) TrackRestoreV2(ctx context.Context, res
 	logger := utils.AddLoggerContext(d.logger, ctx)
 
 	// res, err := http.Get(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId))
-	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(restoreId)))
+	u, _ := url.Parse(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, url.PathEscape(restoreId)))
 	q := u.Query()
 	q.Set("blobPath", blobPath)
 	u.RawQuery = q.Encode()
@@ -247,7 +247,7 @@ func (d DefaultBackupAdministrationImpl) TrackRestoreV2(ctx context.Context, res
 func (d DefaultBackupAdministrationImpl) EvictRestoreV2(ctx context.Context, restoreId, blobPath string) bool {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 	// req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId), nil)
-	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(restoreId)))
+	u, _ := url.Parse(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, url.PathEscape(restoreId)))
 	q := u.Query()
 	q.Set("blobPath", blobPath)
 	u.RawQuery = q.Encode()
