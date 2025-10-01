@@ -46,7 +46,7 @@ func (d DefaultBackupAdministrationImpl) CollectBackupV2(ctx context.Context, st
 		logger.Warn("Backup daemon responded with status: not found")
 		return nil, false
 	}
-	if res.StatusCode != http.StatusOK {
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted {
 		utils.PanicError(fmt.Errorf("failed to create backup: %s", string(body)), logger.Error, "Failed to create backup")
 	}
 
@@ -192,7 +192,7 @@ func (d DefaultBackupAdministrationImpl) RestoreBackupV2(ctx context.Context, ba
 		logger.Warn("Backup daemon responded with status: not found")
 		return nil, false
 	}
-	if res.StatusCode != http.StatusOK {
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted {
 		utils.PanicError(fmt.Errorf("failed to create restore: %s", string(body)), logger.Error, "Failed to create restore")
 	}
 
