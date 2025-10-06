@@ -50,7 +50,7 @@ func (d DefaultBackupAdministrationImpl) CollectBackupV2(ctx context.Context, st
 		utils.PanicError(fmt.Errorf("failed to create backup: %s", string(body)), logger.Error, "Failed to create backup")
 	}
 
-	databases := make([]dto.LogicalDatabaseBackup, len(databaseNames))
+	databases := make([]dto.LogicalDatabaseBackup, 0, len(databaseNames))
 	for _, databaseName := range databaseNames {
 		databases = append(databases, dto.LogicalDatabaseBackup{
 			DatabaseName: databaseName,
