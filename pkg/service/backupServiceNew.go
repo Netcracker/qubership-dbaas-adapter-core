@@ -107,7 +107,9 @@ func (d DefaultBackupAdministrationImpl) TrackBackupV2(ctx context.Context, back
 		utils.PanicError(fmt.Errorf("failed to get backup status: %s", string(body)), logger.Error, "Failed to get backup status")
 	}
 
-	backupResponse := &dto.BackupResponse{}
+	backupResponse := &dto.BackupResponse{
+		BlobPath: blobPath,
+	}
 	err = json.Unmarshal(body, backupResponse)
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to unmarshal backup response")
@@ -154,6 +156,7 @@ func (d DefaultBackupAdministrationImpl) RestoreBackupV2(ctx context.Context, ba
 	logger := utils.AddLoggerContext(d.logger, ctx)
 
 	databases := make([]dto.DaemonRestoreMapping, 0, len(restoreRequest.Databases))
+	databasesResp := make([]dto.LogicalDatabaseRestore, 0, len(databases))
 
 	for _, database := range restoreRequest.Databases {
 		dbInfo := convertRestoreRequestToDbInfo(database)
@@ -161,9 +164,16 @@ func (d DefaultBackupAdministrationImpl) RestoreBackupV2(ctx context.Context, ba
 		if err != nil {
 			utils.PanicError(err, logger.Error, "Failed to generate new db name")
 		}
+		// Databases list for backup daemon request
 		databases = append(databases, dto.DaemonRestoreMapping{
 			PreviousDatabaseName: database.DatabaseName,
 			DatabaseName:         newDbName,
+		})
+		// Databases list for response
+		databasesResp = append(databasesResp, dto.LogicalDatabaseRestore{
+			DatabaseName:         newDbName,
+			PreviousDatabaseName: &database.DatabaseName,
+			Status:               dto.NotStartedStatus,
 		})
 	}
 
@@ -196,7 +206,12 @@ func (d DefaultBackupAdministrationImpl) RestoreBackupV2(ctx context.Context, ba
 		utils.PanicError(fmt.Errorf("failed to create restore: %s", string(body)), logger.Error, "Failed to create restore")
 	}
 
-	restoreResponse := &dto.RestoreResponse{}
+	restoreResponse := &dto.RestoreResponse{
+		Status:      dto.NotStartedStatus,
+		StorageName: restoreRequest.StorageName,
+		BlobPath:    restoreRequest.BlobPath,
+		Databases:   databasesResp,
+	}
 	err = json.Unmarshal(body, restoreResponse)
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to unmarshal restore response")
@@ -234,7 +249,9 @@ func (d DefaultBackupAdministrationImpl) TrackRestoreV2(ctx context.Context, res
 		utils.PanicError(fmt.Errorf("failed to get restore status: %s", string(body)), logger.Error, "Failed to get restore status")
 	}
 
-	restoreResponse := &dto.RestoreResponse{}
+	restoreResponse := &dto.RestoreResponse{
+		BlobPath:    blobPath,
+	}
 	err = json.Unmarshal(body, restoreResponse)
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to unmarshal backup response")
