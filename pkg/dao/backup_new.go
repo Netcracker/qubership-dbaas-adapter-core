@@ -71,6 +71,7 @@ type RestoreRequestV2 struct {
 	StorageName string                 `json:"storageName" validate:"required"`
 	BlobPath    string                 `json:"blobPath" validate:"required"`
 	Databases   []DaemonRestoreMapping `json:"databases" validate:"required,dive"`
+	DryRun      bool                   `json:"dryRun,omitempty"`
 }
 
 type DaemonRestoreMapping struct {
