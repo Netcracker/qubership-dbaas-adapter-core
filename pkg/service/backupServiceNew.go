@@ -181,6 +181,7 @@ func (d DefaultBackupAdministrationImpl) RestoreBackupV2(ctx context.Context, ba
 		StorageName: restoreRequest.StorageName,
 		BlobPath:    restoreRequest.BlobPath,
 		Databases:   databases,
+		DryRun:      dryRun,
 	}
 
 	requestBytes, err := json.Marshal(request)
