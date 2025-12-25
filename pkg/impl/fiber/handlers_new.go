@@ -16,16 +16,16 @@ import (
 var validate = validator.New()
 
 type blobPathQuery struct {
-	BlobPath string `query:"blobPath" validate:"required"`
+	BlobPath string `query:"blobPath"`
 }
 
-func requireBlobPath(c *fiber.Ctx) (string, error) {
+func getBlobPath(c *fiber.Ctx) (string, error) {
 	var q blobPathQuery
 	if err := c.QueryParser(&q); err != nil {
 		return "", fiber.NewError(fiber.StatusBadRequest, "invalid query")
 	}
 	if err := validate.Struct(q); err != nil {
-		return "", fiber.NewError(fiber.StatusBadRequest, "query parameter 'blobPath' is required")
+		return "", fiber.NewError(fiber.StatusBadRequest, "invalid query parameters")
 	}
 	return strings.TrimSpace(q.BlobPath), nil
 }
@@ -99,7 +99,7 @@ func (h *DbaasAdapterHandler) CollectBackupV2(c *fiber.Ctx) error {
 // @Router /{appName}/backups/backup/{backupId} [get]
 func (h *DbaasAdapterHandler) TrackBackupV2(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
-	blobPath, err := requireBlobPath(c)
+	blobPath, err := getBlobPath(c)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (h *DbaasAdapterHandler) TrackBackupV2(c *fiber.Ctx) error {
 // @Router /{appName}/backups/backup/{backupId} [delete]
 func (h *DbaasAdapterHandler) DeleteBackupV2(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
-	blobPath, err := requireBlobPath(c)
+	blobPath, err := getBlobPath(c)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (h *DbaasAdapterHandler) RestoreBackupV2(c *fiber.Ctx) error {
 // @Router /{appName}/backups/restore/{restoreId} [get]
 func (h *DbaasAdapterHandler) TrackRestoreV2(c *fiber.Ctx) error {
 	restoreId := c.Params("restoreId")
-	blobPath, err := requireBlobPath(c)
+	blobPath, err := getBlobPath(c)
 	if err != nil {
 		return err
 	}
@@ -251,7 +251,7 @@ func (h *DbaasAdapterHandler) TrackRestoreV2(c *fiber.Ctx) error {
 // @Router /{appName}/backups/restore/{restoreId} [delete]
 func (h *DbaasAdapterHandler) DeleteRestoreV2(c *fiber.Ctx) error {
 	restoreId := c.Params("restoreId")
-	blobPath, err := requireBlobPath(c)
+	blobPath, err := getBlobPath(c)
 	if err != nil {
 		return err
 	}

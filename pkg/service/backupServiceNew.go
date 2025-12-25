@@ -85,7 +85,11 @@ func (d DefaultBackupAdministrationImpl) TrackBackupV2(ctx context.Context, back
 	// res, err := http.Get(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, backupId))
 	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(backupId)))
 	q := u.Query()
-	q.Set("blobPath", blobPath)
+
+	if blobPath != "" {
+		q.Set("blobPath", blobPath)
+	}
+
 	u.RawQuery = q.Encode()
 	req, _ := http.NewRequest(http.MethodGet, u.String(), nil)
 	res, err := d.client.Do(req)
@@ -123,7 +127,11 @@ func (d DefaultBackupAdministrationImpl) EvictBackupV2(ctx context.Context, back
 	// req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, backupId), nil)
 	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(backupId)))
 	q := u.Query()
-	q.Set("blobPath", blobPath)
+
+	if blobPath != "" {
+		q.Set("blobPath", blobPath)
+	}
+
 	u.RawQuery = q.Encode()
 	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
 	if err != nil {
@@ -228,7 +236,11 @@ func (d DefaultBackupAdministrationImpl) TrackRestoreV2(ctx context.Context, res
 	// res, err := http.Get(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId))
 	u, _ := url.Parse(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, url.PathEscape(restoreId)))
 	q := u.Query()
-	q.Set("blobPath", blobPath)
+
+	if blobPath != "" {
+		q.Set("blobPath", blobPath)
+	}
+
 	u.RawQuery = q.Encode()
 	req, _ := http.NewRequest(http.MethodGet, u.String(), nil)
 	res, err := d.client.Do(req)
@@ -251,7 +263,7 @@ func (d DefaultBackupAdministrationImpl) TrackRestoreV2(ctx context.Context, res
 	}
 
 	restoreResponse := &dto.RestoreResponse{
-		BlobPath:    blobPath,
+		BlobPath: blobPath,
 	}
 	err = json.Unmarshal(body, restoreResponse)
 	if err != nil {
@@ -267,7 +279,11 @@ func (d DefaultBackupAdministrationImpl) EvictRestoreV2(ctx context.Context, res
 	// req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId), nil)
 	u, _ := url.Parse(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, url.PathEscape(restoreId)))
 	q := u.Query()
-	q.Set("blobPath", blobPath)
+
+	if blobPath != "" {
+		q.Set("blobPath", blobPath)
+	}
+
 	u.RawQuery = q.Encode()
 	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
 	if err != nil {
