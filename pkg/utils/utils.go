@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -217,6 +218,22 @@ func (h *CustomLogHandler) Write(p []byte) (n int, err error) {
 
 	output := fmt.Sprintf("[%s] [%s] [request_id=%s] [tenant_id=%s] [thread=%s] [class=%s] %s",
 		timestamp, levelStr, requestID, tenantID, thread, class, message)
+
+	standardFields := []string{
+		"level", "timestamp", "msg",
+		"request_id", "tenant_id", "thread", "class",
+	}
+
+	var additionalFields []string
+	for key, value := range logEntry {
+		if !slices.Contains(standardFields, key) {
+			additionalFields = append(additionalFields, fmt.Sprintf("%s: %v", key, value))
+		}
+	}
+
+	if len(additionalFields) > 0 {
+		output = fmt.Sprintf("%s, %s", output, strings.Join(additionalFields, ", "))
+	}
 
 	fmt.Println(output)
 
