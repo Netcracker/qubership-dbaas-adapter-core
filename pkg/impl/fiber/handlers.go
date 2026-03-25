@@ -286,18 +286,51 @@ func (h *DbaasAdapterHandler) PhysicalRegistration(c *fiber.Ctx) error { //TODO 
 // @Failure 500 {string} Token "Unknown error"
 // @Router /{appName}/backups/collect [post]
 func (h *DbaasAdapterHandler) Collect(c *fiber.Ctx) error {
+	// Log raw request body
+	h.logger.Info("Collect API called",
+		zap.String("rawBody", string(c.Body())),
+	)
+
 	var databases []string
 	parserErr := c.BodyParser(&databases)
 	if parserErr != nil {
+		h.logger.Error("Body parse error",
+			zap.Error(parserErr),
+			zap.String("rawBody", string(c.Body())),
+		)
 		return parserErr
 	}
+
+	// Log parsed values
+	h.logger.Info("Parsed databases",
+		zap.Any("databases", databases),
+	)
+
+	appName := c.Params("appName")
+	h.logger.Info("AppName",
+		zap.String("appName", appName),
+	)
+
 	ctx := getRequestContext(c)
+
 	allowEviction, _ := strconv.ParseBool(checkIfParamExistsOrDefault(c, "allowEviction", "true", "true"))
 	keepFromRequest := checkIfParamExistsOrDefault(c, "keep", "", "")
-	h.logger.Debug(fmt.Sprintf("Requested to collect backup with %v databases specified. allowEviction = %v and keep =%s", len(databases), allowEviction, keepFromRequest))
+
+	h.logger.Debug("Collect request",
+		zap.String("appName", appName),
+		zap.Int("dbCount", len(databases)),
+		zap.Bool("allowEviction", allowEviction),
+		zap.String("keep", keepFromRequest),
+	)
+
 	actionTrack := h.backupService.CollectBackup(ctx, databases, keepFromRequest, allowEviction)
+
 	c.Location(locationPath(h.backupPath, "/track/backup/", actionTrack.TrackId))
-	h.logger.Debug(fmt.Sprintf("Track: %+v", actionTrack))
+
+	h.logger.Debug("Track",
+		zap.Any("track", actionTrack),
+	)
+
 	return c.Status(fiber.StatusAccepted).JSON(actionTrack)
 }
 
