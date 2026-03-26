@@ -128,7 +128,7 @@ func GetDatabaseAdapterRestoreActionTrackByTask(task BackupTask) DatabaseAdapter
 }
 
 type BackupRequest struct {
-	Args          []string `json:"args"`
+	Dbs           []string `json:"dbs"`
 	AllowEviction string   `json:"allow_eviction"`
 	Keep          string   `json:"keep,omitempty"`
 }

@@ -145,7 +145,7 @@ func substr(s string, start, end int) string {
 
 func (d DefaultBackupAdministrationImpl) CollectBackup(ctx context.Context, logicalDatabases []string, keepFromRequest string, allowEviction bool) dto.DatabaseAdapterBaseTrack {
 	request := dto.BackupRequest{
-		Args:          logicalDatabases,
+		Dbs:           logicalDatabases,
 		AllowEviction: strconv.FormatBool(allowEviction),
 	}
 	if keepFromRequest != "" {
