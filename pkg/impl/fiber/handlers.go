@@ -291,8 +291,14 @@ func (h *DbaasAdapterHandler) Collect(c *fiber.Ctx) error {
 	h.logger.Info("Collect API called",
 		zap.String("rawBody", string(c.Body())),
 	)
-
-	appName := c.Params("appName")
+	path := c.Path()
+	h.logger.Info("path received",
+		zap.String("path", path),
+	)
+	appName := ""
+	if strings.Contains(path, "/cassandra/") {
+		appName = "cassandra"
+	}
 
 	h.logger.Info("AppName received",
 		zap.String("appName", appName),
