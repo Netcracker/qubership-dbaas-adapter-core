@@ -291,6 +291,13 @@ func (h *DbaasAdapterHandler) Collect(c *fiber.Ctx) error {
 	if parserErr != nil {
 		return parserErr
 	}
+
+	body := c.Body()
+	fmt.Println(string(body))
+
+	h.logger.Info("Rquest body of collects api: ")
+	h.logger.Info(string(body))
+
 	ctx := getRequestContext(c)
 	allowEviction, _ := strconv.ParseBool(checkIfParamExistsOrDefault(c, "allowEviction", "true", "true"))
 	keepFromRequest := checkIfParamExistsOrDefault(c, "keep", "", "")

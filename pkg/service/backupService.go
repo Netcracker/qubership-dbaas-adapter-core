@@ -86,11 +86,19 @@ func DefaultBackupAdministrationService(
 
 func (d DefaultBackupAdministrationImpl) SendBackupRequest(ctx context.Context, method, uri string, bodyStruct interface{}) *http.Response {
 	logger := utils.AddLoggerContext(d.logger, ctx)
+
+	logger.Info("Inside ==== SendBackupRequest====")
+
 	var req *http.Request
 	var err error
 	if method == http.MethodPost {
 		codedBody, errm := json.Marshal(bodyStruct)
+		logger.Info("JSON valueof body sent :")
+		logger.Info(string(codedBody))
+
 		utils.PanicError(errm, logger.Error, "Failed to marshal request body to send to backup")
+		logger.Info("uri: ")
+		logger.Info(d.backupAddress + uri)
 		req, err = http.NewRequest(method, d.backupAddress+uri, bytes.NewReader(codedBody))
 	} else {
 		req, err = http.NewRequest(method, d.backupAddress+uri, nil)
