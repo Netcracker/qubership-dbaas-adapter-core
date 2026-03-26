@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"runtime/debug"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
@@ -293,10 +294,13 @@ func (h *DbaasAdapterHandler) Collect(c *fiber.Ctx) error {
 
 	appName := c.Params("appName")
 
+	h.logger.Info("AppName received",
+		zap.String("appName", appName),
+	)
+
 	var databases []string
 
-	if appName == "cassandra" {
-		// 🔥 Cassandra expects object format
+	if strings.EqualFold(strings.TrimSpace(appName), "cassandra") {
 		var req struct {
 			Dbs []string `json:"dbs"`
 		}
@@ -312,7 +316,6 @@ func (h *DbaasAdapterHandler) Collect(c *fiber.Ctx) error {
 		databases = req.Dbs
 
 	} else {
-		// ✅ Other apps → raw array
 		if err := c.BodyParser(&databases); err != nil {
 			h.logger.Error("Body parse error",
 				zap.Error(err),
