@@ -291,23 +291,40 @@ func (h *DbaasAdapterHandler) Collect(c *fiber.Ctx) error {
 		zap.String("rawBody", string(c.Body())),
 	)
 
+	appName := c.Params("appName")
+
 	var databases []string
-	parserErr := c.BodyParser(&databases)
-	if parserErr != nil {
-		h.logger.Error("Body parse error",
-			zap.Error(parserErr),
-			zap.String("rawBody", string(c.Body())),
-		)
-		return parserErr
+
+	if appName == "cassandra" {
+		// 🔥 Cassandra expects object format
+		var req struct {
+			Dbs []string `json:"dbs"`
+		}
+
+		if err := c.BodyParser(&req); err != nil {
+			h.logger.Error("Cassandra parse error",
+				zap.Error(err),
+				zap.String("rawBody", string(c.Body())),
+			)
+			return err
+		}
+
+		databases = req.Dbs
+
+	} else {
+		// ✅ Other apps → raw array
+		if err := c.BodyParser(&databases); err != nil {
+			h.logger.Error("Body parse error",
+				zap.Error(err),
+				zap.String("rawBody", string(c.Body())),
+			)
+			return err
+		}
 	}
 
-	// Log parsed values
+	// Logs
 	h.logger.Info("Parsed databases",
 		zap.Any("databases", databases),
-	)
-
-	appName := c.Params("appName")
-	h.logger.Info("AppName",
 		zap.String("appName", appName),
 	)
 
