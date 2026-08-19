@@ -247,7 +247,7 @@ func (adminService *CoreAdministrationService) performVaultRolesDelete(ctx conte
 					logger.Debug(fmt.Sprintf("vaultRole can't be found in metadata for %s", resource.Name))
 				}
 			} else {
-				logger.Debug(fmt.Sprintf(fmt.Sprintf("can't get metadata for %s", resource.Name)))
+				logger.Debug(fmt.Sprintf("can't get metadata for %s", resource.Name))
 			}
 		}
 	}
