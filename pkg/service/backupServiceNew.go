@@ -18,6 +18,20 @@ const (
 	backupAPIv1 = "api/v1"
 )
 
+// sendBackupV2Request builds, authenticates, and dispatches a V2 backup daemon request.
+// SetBasicAuth is called unconditionally, matching the V1 SendBackupRequest behaviour.
+func (d DefaultBackupAdministrationImpl) sendBackupV2Request(ctx context.Context, method, rawURL string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest(method, rawURL, body)
+	if err != nil {
+		return nil, err
+	}
+	if method == http.MethodPost {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	req.SetBasicAuth(d.backupApiUser, d.backupApiPass)
+	return d.client.Do(req)
+}
+
 // CollectBackupV2 creates a new backup with the specified parameters
 func (d DefaultBackupAdministrationImpl) CollectBackupV2(ctx context.Context, storageName, blobPath string, databaseNames []string) (*dto.BackupResponse, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
@@ -32,7 +46,9 @@ func (d DefaultBackupAdministrationImpl) CollectBackupV2(ctx context.Context, st
 		utils.PanicError(err, logger.Error, "Failed to marshal backup request")
 	}
 
-	res, err := http.Post(fmt.Sprintf("%s/%s/backup", d.backupAddress, backupAPIv1), "application/json", bytes.NewReader(requestBytes))
+	res, err := d.sendBackupV2Request(ctx, http.MethodPost,
+		fmt.Sprintf("%s/%s/backup", d.backupAddress, backupAPIv1),
+		bytes.NewReader(requestBytes))
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to create backup")
 	}
@@ -82,13 +98,11 @@ func (d DefaultBackupAdministrationImpl) CollectBackupV2(ctx context.Context, st
 func (d DefaultBackupAdministrationImpl) TrackBackupV2(ctx context.Context, backupId, blobPath string) (*dto.BackupResponse, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 
-	// res, err := http.Get(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, backupId))
 	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(backupId)))
 	q := u.Query()
 	q.Set("blobPath", blobPath)
 	u.RawQuery = q.Encode()
-	req, _ := http.NewRequest(http.MethodGet, u.String(), nil)
-	res, err := d.client.Do(req)
+	res, err := d.sendBackupV2Request(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to get backup status")
 	}
@@ -120,17 +134,12 @@ func (d DefaultBackupAdministrationImpl) TrackBackupV2(ctx context.Context, back
 
 func (d DefaultBackupAdministrationImpl) EvictBackupV2(ctx context.Context, backupId, blobPath string) bool {
 	logger := utils.AddLoggerContext(d.logger, ctx)
-	// req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, backupId), nil)
+
 	u, _ := url.Parse(fmt.Sprintf("%s/%s/backup/%s", d.backupAddress, backupAPIv1, url.PathEscape(backupId)))
 	q := u.Query()
 	q.Set("blobPath", blobPath)
 	u.RawQuery = q.Encode()
-	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
-	if err != nil {
-		utils.PanicError(err, logger.Error, "Failed to create request")
-	}
-
-	res, err := d.client.Do(req)
+	res, err := d.sendBackupV2Request(ctx, http.MethodDelete, u.String(), nil)
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to evict backup")
 	}
@@ -189,9 +198,11 @@ func (d DefaultBackupAdministrationImpl) RestoreBackupV2(ctx context.Context, ba
 		utils.PanicError(err, logger.Error, "Failed to marshal backup request")
 	}
 
-	res, err := http.Post(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, backupId), "application/json", bytes.NewReader(requestBytes))
+	res, err := d.sendBackupV2Request(ctx, http.MethodPost,
+		fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, backupId),
+		bytes.NewReader(requestBytes))
 	if err != nil {
-		utils.PanicError(err, logger.Error, "Failed to create backup")
+		utils.PanicError(err, logger.Error, "Failed to create restore")
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
@@ -225,13 +236,11 @@ func (d DefaultBackupAdministrationImpl) RestoreBackupV2(ctx context.Context, ba
 func (d DefaultBackupAdministrationImpl) TrackRestoreV2(ctx context.Context, restoreId, blobPath string) (*dto.RestoreResponse, bool) {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 
-	// res, err := http.Get(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId))
 	u, _ := url.Parse(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, url.PathEscape(restoreId)))
 	q := u.Query()
 	q.Set("blobPath", blobPath)
 	u.RawQuery = q.Encode()
-	req, _ := http.NewRequest(http.MethodGet, u.String(), nil)
-	res, err := d.client.Do(req)
+	res, err := d.sendBackupV2Request(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to get restore status")
 	}
@@ -251,7 +260,7 @@ func (d DefaultBackupAdministrationImpl) TrackRestoreV2(ctx context.Context, res
 	}
 
 	restoreResponse := &dto.RestoreResponse{
-		BlobPath:    blobPath,
+		BlobPath: blobPath,
 	}
 	err = json.Unmarshal(body, restoreResponse)
 	if err != nil {
@@ -264,17 +273,12 @@ func (d DefaultBackupAdministrationImpl) TrackRestoreV2(ctx context.Context, res
 // EvictRestoreV2 deletes a restore operation
 func (d DefaultBackupAdministrationImpl) EvictRestoreV2(ctx context.Context, restoreId, blobPath string) bool {
 	logger := utils.AddLoggerContext(d.logger, ctx)
-	// req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, restoreId), nil)
+
 	u, _ := url.Parse(fmt.Sprintf("%s/%s/restore/%s", d.backupAddress, backupAPIv1, url.PathEscape(restoreId)))
 	q := u.Query()
 	q.Set("blobPath", blobPath)
 	u.RawQuery = q.Encode()
-	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
-	if err != nil {
-		utils.PanicError(err, logger.Error, "Failed to create request")
-	}
-
-	res, err := d.client.Do(req)
+	res, err := d.sendBackupV2Request(ctx, http.MethodDelete, u.String(), nil)
 	if err != nil {
 		utils.PanicError(err, logger.Error, "Failed to evict restore")
 	}
