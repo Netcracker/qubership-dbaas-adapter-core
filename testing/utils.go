@@ -19,7 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -300,7 +300,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 		adapterApiPass)
 	assert.Equal(t, nil, respErr)
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
-	createdDbBody, _ := ioutil.ReadAll(resp.Body)
+	createdDbBody, _ := io.ReadAll(resp.Body)
 	var createdDb dao.DbCreateResponse
 	json.Unmarshal(createdDbBody, &createdDb)
 	resp.Body.Close()
@@ -315,7 +315,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 		adapterApiPass)
 	assert.Equal(t, nil, respErr)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	dbsBody, _ := ioutil.ReadAll(resp.Body)
+	dbsBody, _ := io.ReadAll(resp.Body)
 	var dbsGetList []string
 	json.Unmarshal(dbsBody, &dbsGetList)
 	resp.Body.Close()
@@ -324,7 +324,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 	resp, respErr = HandlerTest(logger, app,
 		http.MethodPut,
 		appPath+"/databases/"+createdDbName+"/metadata",
-		map[string]interface{}{"newMeta": "newMetaValue"},
+		map[string]any{"newMeta": "newMetaValue"},
 		adapterApiUser,
 		adapterApiPass)
 	assert.Equal(t, nil, respErr)
@@ -338,7 +338,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 		adapterApiPass)
 	assert.Equal(t, nil, respErr)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	describedDbsBody, _ := ioutil.ReadAll(resp.Body)
+	describedDbsBody, _ := io.ReadAll(resp.Body)
 	var describedDbs map[string]dao.LogicalDatabaseDescribed
 	json.Unmarshal(describedDbsBody, &describedDbs)
 	resp.Body.Close()
@@ -368,7 +368,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 		adapterApiPass)
 	assert.Equal(t, nil, respErr)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	phyDbInfoBody, _ := ioutil.ReadAll(resp.Body)
+	phyDbInfoBody, _ := io.ReadAll(resp.Body)
 	var phyDbInfo service.PhysicalDatabase
 	json.Unmarshal(phyDbInfoBody, &phyDbInfo)
 	resp.Body.Close()
@@ -383,7 +383,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 			adapterApiPass)
 		assert.Equal(t, nil, respErr)
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
-		createdUserWONameBody, _ := ioutil.ReadAll(resp.Body)
+		createdUserWONameBody, _ := io.ReadAll(resp.Body)
 		var createdUserWOName dao.CreatedUser
 		json.Unmarshal(createdUserWONameBody, &createdUserWOName)
 		resp.Body.Close()
@@ -398,7 +398,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 			adapterApiPass)
 		assert.Equal(t, nil, respErr)
 		assert.Equal(t, http.StatusCreated, resp.StatusCode)
-		createdUserWNameBody, _ := ioutil.ReadAll(resp.Body)
+		createdUserWNameBody, _ := io.ReadAll(resp.Body)
 		var createdUserWName dao.CreatedUser
 		json.Unmarshal(createdUserWNameBody, &createdUserWName)
 		resp.Body.Close()
@@ -416,7 +416,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 			adapterApiPass)
 		assert.Equal(t, nil, respErr)
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-		backupCollectBody, _ := ioutil.ReadAll(resp.Body)
+		backupCollectBody, _ := io.ReadAll(resp.Body)
 		var backupCollect dao.DatabaseAdapterBaseTrack
 		json.Unmarshal(backupCollectBody, &backupCollect)
 		resp.Body.Close()
@@ -431,7 +431,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 			adapterApiPass)
 		assert.Equal(t, nil, respErr)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		backupTrackBody, _ := ioutil.ReadAll(resp.Body)
+		backupTrackBody, _ := io.ReadAll(resp.Body)
 		var backupTrack dao.DatabaseAdapterBaseTrack
 		json.Unmarshal(backupTrackBody, &backupTrack)
 		resp.Body.Close()
@@ -445,7 +445,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 			adapterApiPass)
 		assert.Equal(t, nil, respErr)
 		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-		restoreBody, _ := ioutil.ReadAll(resp.Body)
+		restoreBody, _ := io.ReadAll(resp.Body)
 		var restore dao.DatabaseAdapterRestoreTrack
 		json.Unmarshal(restoreBody, &restore)
 		resp.Body.Close()
@@ -460,7 +460,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 			adapterApiPass)
 		assert.Equal(t, nil, respErr)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		restoreTrackBody, _ := ioutil.ReadAll(resp.Body)
+		restoreTrackBody, _ := io.ReadAll(resp.Body)
 		var restoreTrack dao.DatabaseAdapterBaseTrack
 		json.Unmarshal(restoreTrackBody, &restoreTrack)
 		resp.Body.Close()
@@ -478,7 +478,7 @@ func UseFullFeaturedConfig(logger *zap.Logger, t *testing.T, app *fiber.App, ver
 
 }
 
-func HandlerTest(logger *zap.Logger, app *fiber.App, method string, target string, bodyStruct interface{}, creds ...string) (resp *http.Response, err error) {
+func HandlerTest(logger *zap.Logger, app *fiber.App, method string, target string, bodyStruct any, creds ...string) (resp *http.Response, err error) {
 	var req *http.Request
 	if method == http.MethodPost || method == http.MethodPut {
 		codedBody, errm := json.Marshal(bodyStruct)

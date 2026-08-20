@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+
 	"net/http"
 	"os"
 	"regexp"
@@ -123,7 +123,7 @@ func OptionalString(src string, defaultStr string) string {
 	return src
 }
 
-func GetLogger(level ...interface{}) *zap.Logger {
+func GetLogger(level ...any) *zap.Logger {
 	logLevel := determineLogLevel(level...)
 	atom := zap.NewAtomicLevel()
 	encoderCfg := getEncoderConfig()
@@ -150,7 +150,7 @@ func GetLogger(level ...interface{}) *zap.Logger {
 	return zapLogger
 }
 
-func determineLogLevel(level ...interface{}) string {
+func determineLogLevel(level ...any) string {
 	if len(level) > 0 {
 		switch v := level[0].(type) {
 		case string:
@@ -202,7 +202,7 @@ type CustomLogHandler struct {
 }
 
 func (h *CustomLogHandler) Write(p []byte) (n int, err error) {
-	var logEntry map[string]interface{}
+	var logEntry map[string]any
 	if err := json.Unmarshal(p, &logEntry); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to parse log message: %s\n", p)
 		return 0, fmt.Errorf("failed to parse log message")
@@ -265,7 +265,7 @@ func ConfigureHttpsForClientWithCertificate(c *http.Client, certPath string) err
 	rootCAs := x509.NewCertPool()
 
 	// Read client cert file
-	clientCertificates, err := ioutil.ReadFile(certPath)
+	clientCertificates, err := os.ReadFile(certPath)
 	if err != nil {
 		return err
 	}
@@ -286,14 +286,14 @@ func ConfigureHttpsForClientWithCertificate(c *http.Client, certPath string) err
 	return nil
 }
 
-func GetNsAndMsName(metadata map[string]interface{}) (namespace string, msName string, err error) {
+func GetNsAndMsName(metadata map[string]any) (namespace string, msName string, err error) {
 	if metadata == nil {
 		err = fmt.Errorf("metadata is not provided")
 		return
 	}
 
 	if classifierInt, ok := metadata[cKey]; ok {
-		classifier, ok := classifierInt.(map[string]interface{})
+		classifier, ok := classifierInt.(map[string]any)
 		if !ok {
 			err = fmt.Errorf("classifier type is not correct")
 			return

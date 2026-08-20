@@ -84,7 +84,7 @@ func DefaultBackupAdministrationService(
 	}
 }
 
-func (d DefaultBackupAdministrationImpl) SendBackupRequest(ctx context.Context, method, uri string, bodyStruct interface{}) *http.Response {
+func (d DefaultBackupAdministrationImpl) SendBackupRequest(ctx context.Context, method, uri string, bodyStruct any) *http.Response {
 	logger := utils.AddLoggerContext(d.logger, ctx)
 	var req *http.Request
 	var err error

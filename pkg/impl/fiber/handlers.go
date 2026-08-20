@@ -19,6 +19,7 @@ package fiber
 import (
 	"context"
 	"fmt"
+	"maps"
 	"runtime/debug"
 	"strconv"
 
@@ -190,7 +191,7 @@ func (h *DbaasAdapterHandler) DescribeDatabases(c *fiber.Ctx) error {
 // @Router /{appName}/databases/{dbName}/metadata [put]
 func (h *DbaasAdapterHandler) UpdateMetadata(c *fiber.Ctx) error {
 	// Update DB Meta
-	var newMetadata map[string]interface{}
+	var newMetadata map[string]any
 	parseErr := c.BodyParser(&newMetadata)
 	if parseErr != nil {
 		return parseErr
@@ -522,9 +523,7 @@ func BuildFiberDBaaSAdapterHandlers(
 	backupsPath := "/backups"
 
 	supportCopy := make(map[string]bool)
-	for key, val := range supports {
-		supportCopy[key] = val
-	}
+	maps.Copy(supportCopy, supports)
 
 	if profiler {
 		app.Use(pprof.New())
@@ -542,7 +541,7 @@ func BuildFiberDBaaSAdapterHandlers(
 
 	recoverConfig := recover.ConfigDefault
 	recoverConfig.EnableStackTrace = true
-	recoverConfig.StackTraceHandler = func(c *fiber.Ctx, e interface{}) {
+	recoverConfig.StackTraceHandler = func(c *fiber.Ctx, e any) {
 		logger.Error(fmt.Sprintf("Panic: %+v\nStacktrace:\n%s", e, string(debug.Stack())))
 	}
 	app.Use(recover.New(recoverConfig))

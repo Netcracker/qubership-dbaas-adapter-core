@@ -59,31 +59,31 @@ func TestNsAndMsObtaining(t *testing.T) {
 		assert.ErrorContains(t, err, "metadata is not provided")
 	})
 	t.Run("Classifier is not present", func(t *testing.T) {
-		metadata := map[string]interface{}{}
+		metadata := map[string]any{}
 		_, _, err := GetNsAndMsName(metadata)
 		assert.ErrorContains(t, err, "classifier is not specified")
 	})
 	t.Run("Classifier has incorrect type", func(t *testing.T) {
 		classifier := map[string]int{}
-		metadata := map[string]interface{}{cKey: classifier}
+		metadata := map[string]any{cKey: classifier}
 		_, _, err := GetNsAndMsName(metadata)
 		assert.ErrorContains(t, err, "classifier type is not correct")
 	})
 	t.Run("Namespace is not string", func(t *testing.T) {
-		classifier := map[string]interface{}{}
-		metadata := map[string]interface{}{cKey: classifier}
+		classifier := map[string]any{}
+		metadata := map[string]any{cKey: classifier}
 		_, _, err := GetNsAndMsName(metadata)
 		assert.ErrorContains(t, err, "namespace is not string")
 	})
 	t.Run("MicroserviceName is not string", func(t *testing.T) {
-		classifier := map[string]interface{}{nsKey: ""}
-		metadata := map[string]interface{}{cKey: classifier}
+		classifier := map[string]any{nsKey: ""}
+		metadata := map[string]any{cKey: classifier}
 		_, _, err := GetNsAndMsName(metadata)
 		assert.ErrorContains(t, err, "miscroserviceName is not string")
 	})
 	t.Run("Namespace and microserviceName are empty", func(t *testing.T) {
-		classifier := map[string]interface{}{nsKey: "", msKey: ""}
-		metadata := map[string]interface{}{cKey: classifier}
+		classifier := map[string]any{nsKey: "", msKey: ""}
+		metadata := map[string]any{cKey: classifier}
 		_, _, err := GetNsAndMsName(metadata)
 		assert.ErrorContains(t, err, "namespace or microservice name length is 0")
 	})
@@ -91,8 +91,8 @@ func TestNsAndMsObtaining(t *testing.T) {
 		namespace := "test-namespace"
 		microserviceName := "test-micaroservice"
 
-		classifier := map[string]interface{}{nsKey: namespace, msKey: microserviceName}
-		metadata := map[string]interface{}{cKey: classifier}
+		classifier := map[string]any{nsKey: namespace, msKey: microserviceName}
+		metadata := map[string]any{cKey: classifier}
 
 		ns, ms, err := GetNsAndMsName(metadata)
 		assert.Nil(t, err)

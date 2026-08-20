@@ -37,8 +37,8 @@ type DbAdministration interface {
 	DescribeDatabases(ctx context.Context, logicalDatabases []string, showResources bool, showConnections bool) map[string]dto.LogicalDatabaseDescribed
 	GetDatabases(ctx context.Context) []string
 	DropResources(ctx context.Context, resources []dto.DbResource) []dto.DbResource
-	GetMetadata(ctx context.Context, logicalDatabase string) map[string]interface{}
-	UpdateMetadata(ctx context.Context, newMetadata map[string]interface{}, logicalDatabases string)
+	GetMetadata(ctx context.Context, logicalDatabase string) map[string]any
+	UpdateMetadata(ctx context.Context, newMetadata map[string]any, logicalDatabases string)
 	GetDefaultCreateRequest() dto.DbCreateRequest
 	GetDefaultUserCreateRequest() dto.UserCreateRequest
 	// PreStart function runs some routine before server starts to listen for requests
@@ -54,11 +54,11 @@ type DbAdministration interface {
 }
 
 type CoreAdministrationServiceIface interface {
-	CreateDatabase(ctx context.Context, requestOnCreateDb dto.DbCreateRequest) (interface{}, error)
+	CreateDatabase(ctx context.Context, requestOnCreateDb dto.DbCreateRequest) (any, error)
 	DropResources(ctx context.Context, resources []dto.DbResource) (*[]dto.DbResource, bool)
 	GetDatabases(ctx context.Context) []string
-	UpdateMetadata(ctx context.Context, newMetadata map[string]interface{}, serviceName string)
-	DescribeDatabases(ctx context.Context, logicalDatabases []string, isShowResources bool, isShowConnections bool) map[string]interface{}
+	UpdateMetadata(ctx context.Context, newMetadata map[string]any, serviceName string)
+	DescribeDatabases(ctx context.Context, logicalDatabases []string, isShowResources bool, isShowConnections bool) map[string]any
 	GetDefaultCreateRequest() dto.DbCreateRequest
 	GetDefaultUserCreateRequest() dto.UserCreateRequest
 	PreStart()
@@ -100,7 +100,7 @@ func NewCoreAdministrationService(
 	}
 }
 
-func (adminService *CoreAdministrationService) CreateDatabase(ctx context.Context, requestOnCreateDb dto.DbCreateRequest) (interface{}, error) {
+func (adminService *CoreAdministrationService) CreateDatabase(ctx context.Context, requestOnCreateDb dto.DbCreateRequest) (any, error) {
 	//metadata creation should be inside as well
 	logicalDatabaseName, dbDescribed, createErr := adminService.dbAdm.CreateDatabase(ctx, requestOnCreateDb)
 	if createErr != nil {
@@ -153,13 +153,13 @@ func (adminService *CoreAdministrationService) GetDatabases(ctx context.Context)
 	return dbs
 }
 
-func (adminService *CoreAdministrationService) UpdateMetadata(ctx context.Context, newMetadata map[string]interface{}, serviceName string) {
+func (adminService *CoreAdministrationService) UpdateMetadata(ctx context.Context, newMetadata map[string]any, serviceName string) {
 	logger := utils.AddLoggerContext(adminService.logger, ctx)
 	adminService.dbAdm.UpdateMetadata(ctx, newMetadata, serviceName)
 	logger.Debug(fmt.Sprintf("Metadata for %v keyspace is updated", serviceName))
 }
 
-func (adminService *CoreAdministrationService) DescribeDatabases(ctx context.Context, logicalDatabases []string, isShowResources bool, isShowConnections bool) map[string]interface{} {
+func (adminService *CoreAdministrationService) DescribeDatabases(ctx context.Context, logicalDatabases []string, isShowResources bool, isShowConnections bool) map[string]any {
 	logger := utils.AddLoggerContext(adminService.logger, ctx)
 	dbsList := logicalDatabases
 	if len(dbsList) == 0 {
@@ -213,12 +213,12 @@ func (adminService *CoreAdministrationService) GetVersion() dto.ApiVersion {
 	return adminService.dbAdm.GetVersion()
 }
 
-func (adminService *CoreAdministrationService) createVaultRole(ctx context.Context, metadata map[string]interface{}, dbName, userName string) (string, error) {
+func (adminService *CoreAdministrationService) createVaultRole(ctx context.Context, metadata map[string]any, dbName, userName string) (string, error) {
 	err := validateSettingMetadata(metadata)
 	if err != nil {
 		return "", err
 	}
-	classifier := metadata["classifier"].(map[string]interface{})
+	classifier := metadata["classifier"].(map[string]any)
 	namespace := classifier["namespace"].(string)
 	microserviceName := metadata["microserviceName"].(string)
 	cloudPublicHost := utils.GetEnv("CLOUD_PUBLIC_HOST", "")
@@ -239,7 +239,7 @@ func (adminService *CoreAdministrationService) performVaultRolesDelete(ctx conte
 			if metadata != nil {
 				if vaultRoleName, ok := metadata[vaultRole].(string); ok {
 					_ = adminService.vaultClient.DeleteVaultRole(vaultRoleName)
-				} else if vaultRoleNames, ok := metadata[vaultRole].([]interface{}); ok {
+				} else if vaultRoleNames, ok := metadata[vaultRole].([]any); ok {
 					for _, vaultRoleName := range vaultRoleNames {
 						_ = adminService.vaultClient.DeleteVaultRole(vaultRoleName.(string))
 					}
@@ -253,8 +253,8 @@ func (adminService *CoreAdministrationService) performVaultRolesDelete(ctx conte
 	}
 }
 
-func (adminService *CoreAdministrationService) prepareDbDescriptions(dbDescribed map[string]dto.LogicalDatabaseDescribed) map[string]interface{} {
-	result := make(map[string]interface{}, 0)
+func (adminService *CoreAdministrationService) prepareDbDescriptions(dbDescribed map[string]dto.LogicalDatabaseDescribed) map[string]any {
+	result := make(map[string]any, 0)
 	if adminService.dbAdm.GetVersion() == "v1" {
 		for key, description := range dbDescribed {
 			oldDescription := dto.LogicalDatabaseDescribedSingle{
@@ -272,7 +272,7 @@ func (adminService *CoreAdministrationService) prepareDbDescriptions(dbDescribed
 	return result
 }
 
-func (adminService *CoreAdministrationService) prepareDbCreateResponse(logicalDatabaseName string, dbDescribed *dto.LogicalDatabaseDescribed) interface{} {
+func (adminService *CoreAdministrationService) prepareDbCreateResponse(logicalDatabaseName string, dbDescribed *dto.LogicalDatabaseDescribed) any {
 	if adminService.dbAdm.GetVersion() == "v1" {
 		return dto.DbCreateResponse{Name: logicalDatabaseName, ConnectionProperties: dbDescribed.ConnectionProperties[0], Resources: dbDescribed.Resources}
 	}
@@ -355,12 +355,12 @@ func (adminService *CoreAdministrationService) CreateRoles(ctx context.Context, 
 	return resultSuccess, failure
 }
 
-func appendVaultRoleToMetadata(metadata map[string]interface{}, roleName string) map[string]interface{} {
+func appendVaultRoleToMetadata(metadata map[string]any, roleName string) map[string]any {
 	if role, ok := metadata[vaultRole].(string); ok {
-		roles := make([]interface{}, 0)
+		roles := make([]any, 0)
 		roles = append(roles, role, roleName)
 		metadata[vaultRole] = roles
-	} else if roles, ok := metadata[vaultRole].([]interface{}); ok {
+	} else if roles, ok := metadata[vaultRole].([]any); ok {
 		roles = append(roles, roleName)
 		metadata[vaultRole] = roles
 	} else {
@@ -369,13 +369,13 @@ func appendVaultRoleToMetadata(metadata map[string]interface{}, roleName string)
 	return metadata
 }
 
-func validateSettingMetadata(metadata map[string]interface{}) error {
+func validateSettingMetadata(metadata map[string]any) error {
 	classifierData := metadata["classifier"]
 	if classifierData == nil {
 		return fmt.Errorf("request contains not valid 'classifier' parameter in metadata")
 	}
 
-	classifier := metadata["classifier"].(map[string]interface{})
+	classifier := metadata["classifier"].(map[string]any)
 	if classifier["namespace"] == nil {
 		return fmt.Errorf("request contains not valid 'namespace' parameter in classifier")
 	}
