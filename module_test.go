@@ -103,12 +103,12 @@ func (d DbTestAdmin) DropResources(ctx context.Context, resources []dao.DbResour
 	return rsrs
 }
 
-func (d DbTestAdmin) GetMetadata(ctx context.Context, logicalDatabase string) map[string]interface{} {
+func (d DbTestAdmin) GetMetadata(ctx context.Context, logicalDatabase string) map[string]any {
 	d.logger.Debug("Get metadata. Return empty")
-	return map[string]interface{}{}
+	return map[string]any{}
 }
 
-func (d DbTestAdmin) UpdateMetadata(ctx context.Context, newMetadata map[string]interface{}, logicalDatabases string) {
+func (d DbTestAdmin) UpdateMetadata(ctx context.Context, newMetadata map[string]any, logicalDatabases string) {
 	d.logger.Debug("Updated Metadata void")
 }
 

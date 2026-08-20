@@ -17,7 +17,8 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
+
 	"strings"
 
 	vault "github.com/hashicorp/vault/api"
@@ -215,7 +216,7 @@ func GetK8SToken(fileName string) (string, error) {
 		fileName = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	}
 
-	rawContent, err := ioutil.ReadFile(fileName)
+	rawContent, err := os.ReadFile(fileName)
 	if err != nil {
 		log.Error(fmt.Sprintf("Error during read file %s", fileName), zap.Error(err))
 		return "", err

@@ -18,7 +18,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"slices"
+
 	"net/http"
 	"strings"
 
@@ -75,10 +76,8 @@ func (d *Client) requestAggregatorVersion() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		for _, vers := range aggrVersion.SupportedMajors {
-			if vers == 3 {
-				return "v3", nil
-			}
+		if slices.Contains(aggrVersion.SupportedMajors, 3) {
+			return "v3", nil
 		}
 		return "v2", nil
 	} else if code == http.StatusNotFound {
@@ -111,7 +110,7 @@ func (d *Client) sendRequest(method, url string, payload io.Reader) (int, []byte
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		if resp != nil {
 			return resp.StatusCode, nil, err

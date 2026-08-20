@@ -14,6 +14,8 @@
 
 package dao
 
+import "maps"
+
 const (
 	RootUrl         = "/api"
 	MajorAPIVersion = 2
@@ -33,7 +35,7 @@ type Status string
 
 type Metadata struct {
 	ApiVersion     ApiVersion      `json:"apiVersion,omitempty"`
-	ApiVersions    ApiVersions     `json:"apiVersions,omitempty"`
+	ApiVersions    ApiVersions     `json:"apiVersions"`
 	SupportedRoles []string        `json:"supportedRoles,omitempty"`
 	Features       map[string]bool `json:"features,omitempty"`
 	ROHost         string          `json:"roHost,omitempty"`
@@ -51,7 +53,7 @@ type ApiVersionsSpec struct {
 }
 
 type PhysicalDatabaseRegistrationResponse struct {
-	Instruction Instruction `json:"instruction,omitempty"`
+	Instruction Instruction `json:"instruction"`
 }
 
 type Instruction struct {
@@ -67,16 +69,16 @@ type AdditionalRole struct {
 }
 
 type DbCreateRequest struct {
-	Metadata   map[string]interface{} `json:"metadata,omitempty"`
-	NamePrefix *string                `json:"namePrefix,omitempty"`
-	Password   string                 `json:"password,omitempty"`
-	DbName     string                 `json:"dbName,omitempty"`
-	Settings   map[string]interface{} `json:"settings,omitempty"`
-	Username   string                 `json:"username,omitempty"`
-	Role       string                 `json:"role,omitempty"`
+	Metadata   map[string]any `json:"metadata,omitempty"`
+	NamePrefix *string        `json:"namePrefix,omitempty"`
+	Password   string         `json:"password,omitempty"`
+	DbName     string         `json:"dbName,omitempty"`
+	Settings   map[string]any `json:"settings,omitempty"`
+	Username   string         `json:"username,omitempty"`
+	Role       string         `json:"role,omitempty"`
 }
 
-type ConnectionProperties map[string]interface{}
+type ConnectionProperties map[string]any
 
 type DbCreateResponse struct {
 	Name                 string               `json:"name,omitempty"`
@@ -88,7 +90,7 @@ type DbCreateResponseMultiUser struct {
 	Name                  string                 `json:"name,omitempty"`
 	ConnectionProperties  []ConnectionProperties `json:"connectionProperties,omitempty"`
 	Resources             []DbResource           `json:"resources,omitempty"`
-	ConnectionDescription interface{}            `json:"connectionDescription,omitempty"`
+	ConnectionDescription any                    `json:"connectionDescription,omitempty"`
 }
 
 type DbResource struct {
@@ -130,9 +132,7 @@ func (r *SupportsBase) ToMap() Supports {
 	result["settings"] = r.Settings
 	result["describeDatabases"] = r.DescribeDatabases
 	if r.AdditionalKeys != nil {
-		for key, val := range r.AdditionalKeys {
-			result[key] = val
-		}
+		maps.Copy(result, r.AdditionalKeys)
 	}
 	return result
 }
@@ -161,7 +161,7 @@ type PhysicalDatabaseRegistrationRequest struct {
 	AdapterAddress       string            `json:"adapterAddress"`
 	HttpBasicCredentials BasicAuth         `json:"httpBasicCredentials"`
 	Labels               map[string]string `json:"labels,omitempty"`
-	Metadata             Metadata          `json:"metadata,omitempty"`
+	Metadata             Metadata          `json:"metadata"`
 	Status               Status            `json:"status,omitempty"`
 }
 
