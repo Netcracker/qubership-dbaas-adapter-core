@@ -601,7 +601,7 @@ func BuildFiberDBaaSAdapterHandlers(
 	database.Post("/describe/databases", adapterHandler.DescribeDatabases)
 
 	if physicalService != nil {
-		database.Get("/physical_database", adapterHandler.PhysicalRegistration) //TODO check in dbaas adapter
+		database.Get("/physical_database", adapterHandler.PhysicalRegistration)
 	}
 
 	database.Put("/users", adapterHandler.CreateNewUser)
