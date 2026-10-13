@@ -600,7 +600,9 @@ func BuildFiberDBaaSAdapterHandlers(
 
 	database.Post("/describe/databases", adapterHandler.DescribeDatabases)
 
-	database.Get("/physical_database", adapterHandler.PhysicalRegistration) //TODO check in dbaas adapter
+	if physicalService != nil {
+		database.Get("/physical_database", adapterHandler.PhysicalRegistration) //TODO check in dbaas adapter
+	}
 
 	database.Put("/users", adapterHandler.CreateNewUser)
 
@@ -636,7 +638,9 @@ func BuildFiberDBaaSAdapterHandlers(
 	backups.Delete("/backup/:backupId", adapterHandler.DeleteBackupV2)
 	backups.Delete("/restore/:restoreId", adapterHandler.DeleteRestoreV2)
 
-	general.Get("/physical_database/force_registration", adapterHandler.ForceRegistration)
+	if physicalService != nil {
+		general.Get("/physical_database/force_registration", adapterHandler.ForceRegistration)
+	}
 
 	health := dto.Health{
 		Status: "UP",
@@ -645,8 +649,10 @@ func BuildFiberDBaaSAdapterHandlers(
 		},
 	}
 	coreAdminService.PreStart()
-	physicalService.StartRegister()
-	health.PhysicalDatabaseRegistration = &physicalService.Health
+	if physicalService != nil {
+		physicalService.StartRegister()
+		health.PhysicalDatabaseRegistration = &physicalService.Health
+	}
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(&health)
 	})
