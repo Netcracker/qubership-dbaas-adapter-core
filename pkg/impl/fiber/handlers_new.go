@@ -31,7 +31,7 @@ func requireBlobPath(c *fiber.Ctx) (string, error) {
 }
 
 // CollectBackupV2 initiates a new backup operation
-// @Tags Backup and Restore
+// @Tags Backup and Restore (New API)
 // @Summary Initiate database backup
 // @Security BasicAuth
 // @Description Initiates a backup of specified databases and stores it in the configured storage. The operation is asynchronous and returns immediately with current status of backup.
@@ -87,7 +87,7 @@ func (h *DbaasAdapterHandler) CollectBackupV2(c *fiber.Ctx) error {
 }
 
 // TrackBackupV2 retrieves details about a specific backup operation
-// @Tags Backup and Restore
+// @Tags Backup and Restore (New API)
 // @Summary Get backup details
 // @Security BasicAuth
 // @Description Retrieve details about a specific backup operation
@@ -124,7 +124,7 @@ func (h *DbaasAdapterHandler) TrackBackupV2(c *fiber.Ctx) error {
 }
 
 // DeleteBackupV2 deletes a backup operation
-// @Tags Backup and Restore
+// @Tags Backup and Restore (New API)
 // @Summary Delete backup
 // @Security BasicAuth
 // @Description Delete a backup operation
@@ -159,7 +159,7 @@ func (h *DbaasAdapterHandler) DeleteBackupV2(c *fiber.Ctx) error {
 }
 
 // RestoreBackupV2 restores databases from a backup
-// @Tags Backup and Restore
+// @Tags Backup and Restore (New API)
 // @Summary Restore databases from backup
 // @Security BasicAuth
 // @Description Restores databases from a previously created backup. Supports dry-run mode to validate the restore operation without making changes. The operation is asynchronous and returns immediately with current status of restore.
@@ -211,7 +211,7 @@ func (h *DbaasAdapterHandler) RestoreBackupV2(c *fiber.Ctx) error {
 }
 
 // TrackRestoreV2 retrieves details of a restore operation
-// @Tags Backup and Restore
+// @Tags Backup and Restore (New API)
 // @Summary Get restore details
 // @Security BasicAuth
 // @Description Retrieves details of a restore operation
@@ -247,7 +247,7 @@ func (h *DbaasAdapterHandler) TrackRestoreV2(c *fiber.Ctx) error {
 }
 
 // Delete restore godoc
-// @Tags Backup and Restore
+// @Tags Backup and Restore (New API)
 // @Summary Delete restore
 // @Security BasicAuth
 // @Description Delete a restore operation
