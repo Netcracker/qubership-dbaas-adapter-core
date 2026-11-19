@@ -53,7 +53,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Initiate database backup",
                 "parameters": [
@@ -146,7 +146,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Get backup details",
                 "parameters": [
@@ -222,7 +222,7 @@
                 ],
                 "description": "Delete a backup operation",
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Delete backup",
                 "parameters": [
@@ -303,7 +303,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Restore databases from backup",
                 "parameters": [
@@ -474,7 +474,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Get restore details",
                 "parameters": [
@@ -550,7 +550,7 @@
                 ],
                 "description": "Delete a restore operation",
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Delete restore",
                 "parameters": [

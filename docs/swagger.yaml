@@ -610,7 +610,7 @@ paths:
       - BasicAuth: []
       summary: Initiate database backup
       tags:
-      - Backup and Restore
+      - Backup and Restore (New API)
   /api/{apiVersion}/dbaas/adapter/{appName}/backups/backup/{backupId}:
     delete:
       description: Delete a backup operation
@@ -662,7 +662,7 @@ paths:
       - BasicAuth: []
       summary: Delete backup
       tags:
-      - Backup and Restore
+      - Backup and Restore (New API)
     get:
       description: Retrieve details about a specific backup operation
       parameters:
@@ -717,7 +717,7 @@ paths:
       - BasicAuth: []
       summary: Get backup details
       tags:
-      - Backup and Restore
+      - Backup and Restore (New API)
   /api/{apiVersion}/dbaas/adapter/{appName}/backups/backup/{backupId}/restore:
     post:
       consumes:
@@ -787,7 +787,7 @@ paths:
       - BasicAuth: []
       summary: Restore databases from backup
       tags:
-      - Backup and Restore
+      - Backup and Restore (New API)
   /api/{apiVersion}/dbaas/adapter/{appName}/backups/collect:
     post:
       consumes:
@@ -891,7 +891,7 @@ paths:
       - BasicAuth: []
       summary: Delete restore
       tags:
-      - Backup and Restore
+      - Backup and Restore (New API)
     get:
       description: Retrieves details of a restore operation
       parameters:
@@ -946,7 +946,7 @@ paths:
       - BasicAuth: []
       summary: Get restore details
       tags:
-      - Backup and Restore
+      - Backup and Restore (New API)
   /api/{apiVersion}/dbaas/adapter/{appName}/backups/track/backup/{trackId}:
     get:
       description: Return status of backup task

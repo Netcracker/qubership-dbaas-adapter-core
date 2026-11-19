@@ -61,7 +61,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Initiate database backup",
                 "parameters": [
@@ -154,7 +154,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Get backup details",
                 "parameters": [
@@ -230,7 +230,7 @@ const docTemplate = `{
                 ],
                 "description": "Delete a backup operation",
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Delete backup",
                 "parameters": [
@@ -311,7 +311,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Restore databases from backup",
                 "parameters": [
@@ -482,7 +482,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Get restore details",
                 "parameters": [
@@ -558,7 +558,7 @@ const docTemplate = `{
                 ],
                 "description": "Delete a restore operation",
                 "tags": [
-                    "Backup and Restore"
+                    "Backup and Restore (New API)"
                 ],
                 "summary": "Delete restore",
                 "parameters": [
