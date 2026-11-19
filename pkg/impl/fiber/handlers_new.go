@@ -33,6 +33,7 @@ func requireBlobPath(c *fiber.Ctx) (string, error) {
 // CollectBackupV2 initiates a new backup operation
 // @Tags Backup and Restore
 // @Summary Initiate database backup
+// @Security BasicAuth
 // @Description Initiates a backup of specified databases and stores it in the configured storage. The operation is asynchronous and returns immediately with current status of backup.
 // @Accept json
 // @Produce json
@@ -45,7 +46,7 @@ func requireBlobPath(c *fiber.Ctx) (string, error) {
 // @Failure 403 {string} string "The request was valid, but the server is refusing action"
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
-// @Router /{appName}/backups [post]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/backup [post]
 func (h *DbaasAdapterHandler) CollectBackupV2(c *fiber.Ctx) error {
 	ctx := getRequestContext(c)
 
@@ -88,15 +89,17 @@ func (h *DbaasAdapterHandler) CollectBackupV2(c *fiber.Ctx) error {
 // TrackBackupV2 retrieves details about a specific backup operation
 // @Tags Backup and Restore
 // @Summary Get backup details
+// @Security BasicAuth
 // @Description Retrieve details about a specific backup operation
 // @Produce json
 // @Param appName path string true "Application name" Enums(postgresql, arangodb, clickhouse, mongodb, cassandra) default(postgresql)
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Param backupId path string true "Unique identifier of the backup operation" Format(uuid)
+// @Param blobPath query string true "Backup or restore blob path"
 // @Success 200 {object} dto.BackupResponse "Backup details retrieved successfully"
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
-// @Router /{appName}/backups/backup/{backupId} [get]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/backup/{backupId} [get]
 func (h *DbaasAdapterHandler) TrackBackupV2(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
 	blobPath, err := requireBlobPath(c)
@@ -123,14 +126,16 @@ func (h *DbaasAdapterHandler) TrackBackupV2(c *fiber.Ctx) error {
 // DeleteBackupV2 deletes a backup operation
 // @Tags Backup and Restore
 // @Summary Delete backup
+// @Security BasicAuth
 // @Description Delete a backup operation
 // @Param appName path string true "Application name" Enums(postgresql, arangodb, clickhouse, mongodb, cassandra) default(postgresql)
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Param backupId path string true "Unique identifier of the backup operation" Format(uuid)
+// @Param blobPath query string true "Backup or restore blob path"
 // @Success 204 "Backup deleted successfully"
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
-// @Router /{appName}/backups/backup/{backupId} [delete]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/backup/{backupId} [delete]
 func (h *DbaasAdapterHandler) DeleteBackupV2(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
 	blobPath, err := requireBlobPath(c)
@@ -156,6 +161,7 @@ func (h *DbaasAdapterHandler) DeleteBackupV2(c *fiber.Ctx) error {
 // RestoreBackupV2 restores databases from a backup
 // @Tags Backup and Restore
 // @Summary Restore databases from backup
+// @Security BasicAuth
 // @Description Restores databases from a previously created backup. Supports dry-run mode to validate the restore operation without making changes. The operation is asynchronous and returns immediately with current status of restore.
 // @Accept json
 // @Produce json
@@ -168,7 +174,7 @@ func (h *DbaasAdapterHandler) DeleteBackupV2(c *fiber.Ctx) error {
 // @Failure 400 {object} dto.BadRequestResponse "The request was invalid or cannot be served"
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
-// @Router /{appName}/backups/backup/{backupId}/restore [post]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/backup/{backupId}/restore [post]
 func (h *DbaasAdapterHandler) RestoreBackupV2(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
 	dryRun, _ := strconv.ParseBool(c.Query("dryRun", "false"))
@@ -207,15 +213,17 @@ func (h *DbaasAdapterHandler) RestoreBackupV2(c *fiber.Ctx) error {
 // TrackRestoreV2 retrieves details of a restore operation
 // @Tags Backup and Restore
 // @Summary Get restore details
+// @Security BasicAuth
 // @Description Retrieves details of a restore operation
 // @Produce json
 // @Param appName path string true "Application name" Enums(postgresql, arangodb, clickhouse, mongodb, cassandra) default(postgresql)
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Param restoreId path string true "Unique identifier of the restore operation" Format(uuid)
+// @Param blobPath query string true "Backup or restore blob path"
 // @Success 200 {object} dto.RestoreResponse "Restore details retrieved successfully"
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
-// @Router /{appName}/backups/restore/{restoreId} [get]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/restore/{restoreId} [get]
 func (h *DbaasAdapterHandler) TrackRestoreV2(c *fiber.Ctx) error {
 	restoreId := c.Params("restoreId")
 	blobPath, err := requireBlobPath(c)
@@ -241,14 +249,16 @@ func (h *DbaasAdapterHandler) TrackRestoreV2(c *fiber.Ctx) error {
 // Delete restore godoc
 // @Tags Backup and Restore
 // @Summary Delete restore
+// @Security BasicAuth
 // @Description Delete a restore operation
 // @Param appName path string true "Application name" Enums(postgresql, arangodb, clickhouse, mongodb, cassandra) default(postgresql)
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Param restoreId path string true "Unique identifier of the restore operation" Format(uuid)
+// @Param blobPath query string true "Backup or restore blob path"
 // @Success 204 "Restore deleted successfully"
 // @Failure 404 {string} string "The requested resource could not be found"
 // @Failure 500 {object} dto.ServerErrorResponse "An unexpected error occurred on the server"
-// @Router /{appName}/backups/restore/{restoreId} [delete]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/restore/{restoreId} [delete]
 func (h *DbaasAdapterHandler) DeleteRestoreV2(c *fiber.Ctx) error {
 	restoreId := c.Params("restoreId")
 	blobPath, err := requireBlobPath(c)

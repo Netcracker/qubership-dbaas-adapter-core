@@ -1,7 +1,93 @@
-basePath: /api/{apiVersion}/dbaas/adapter
+basePath: /
 definitions:
+  dao.BackupDatabaseInfo:
+    properties:
+      databaseName:
+        type: string
+    required:
+    - databaseName
+    type: object
+  dao.BackupResponse:
+    properties:
+      backupId:
+        type: string
+      blobPath:
+        type: string
+      completionTime:
+        type: string
+      creationTime:
+        type: string
+      databases:
+        items:
+          $ref: '#/definitions/dao.LogicalDatabaseBackup'
+        type: array
+      errorMessage:
+        type: string
+      status:
+        $ref: '#/definitions/dao.BackupRestoreStatus'
+      storageName:
+        type: string
+    required:
+    - backupId
+    - blobPath
+    - creationTime
+    - databases
+    - status
+    - storageName
+    type: object
+  dao.BackupRestoreStatus:
+    enum:
+    - notStarted
+    - inProgress
+    - completed
+    - failed
+    type: string
+    x-enum-varnames:
+    - NotStartedStatus
+    - InProgressStatus
+    - CompletedStatus
+    - FailedStatus
+  dao.BadRequestResponse:
+    properties:
+      details:
+        items:
+          type: string
+        type: array
+      error:
+        type: string
+    type: object
   dao.ConnectionProperties:
-    additionalProperties: true
+    additionalProperties: {}
+    type: object
+  dao.CreateBackupRequest:
+    properties:
+      blobPath:
+        type: string
+      databases:
+        items:
+          $ref: '#/definitions/dao.BackupDatabaseInfo'
+        type: array
+      storageName:
+        type: string
+    required:
+    - blobPath
+    - databases
+    - storageName
+    type: object
+  dao.CreateRestoreRequest:
+    properties:
+      blobPath:
+        type: string
+      databases:
+        items:
+          $ref: '#/definitions/dao.RestoreMapping'
+        type: array
+      storageName:
+        type: string
+    required:
+    - blobPath
+    - databases
+    - storageName
     type: object
   dao.CreatedUser:
     properties:
@@ -70,7 +156,7 @@ definitions:
       dbName:
         type: string
       metadata:
-        additionalProperties: true
+        additionalProperties: {}
         type: object
       namePrefix:
         type: string
@@ -79,7 +165,7 @@ definitions:
       role:
         type: string
       settings:
-        additionalProperties: true
+        additionalProperties: {}
         type: object
       username:
         type: string
@@ -128,6 +214,33 @@ definitions:
     x-enum-varnames:
     - DELETED
     - DELETE_FAILED
+  dao.Health:
+    properties:
+      physicalDatabaseRegistration:
+        $ref: '#/definitions/dao.PhysicalDatabaseRegistrationHealth'
+      status:
+        type: string
+    type: object
+  dao.LogicalDatabaseBackup:
+    properties:
+      creationTime:
+        type: string
+      databaseName:
+        type: string
+      duration:
+        type: integer
+      errorMessage:
+        type: string
+      path:
+        type: string
+      size:
+        type: integer
+      status:
+        $ref: '#/definitions/dao.BackupRestoreStatus'
+    required:
+    - databaseName
+    - status
+    type: object
   dao.LogicalDatabaseDescribed:
     properties:
       connectionProperties:
@@ -139,6 +252,37 @@ definitions:
           $ref: '#/definitions/dao.DbResource'
         type: array
     type: object
+  dao.LogicalDatabaseRestore:
+    properties:
+      creationTime:
+        type: string
+      databaseName:
+        type: string
+      duration:
+        type: integer
+      errorMessage:
+        type: string
+      microserviceName:
+        type: string
+      namespace:
+        type: string
+      path:
+        type: string
+      prefix:
+        type: string
+      previousDatabaseName:
+        type: string
+      status:
+        $ref: '#/definitions/dao.BackupRestoreStatus'
+    required:
+    - databaseName
+    - status
+    type: object
+  dao.PhysicalDatabaseRegistrationHealth:
+    properties:
+      status:
+        type: string
+    type: object
   dao.RestorationRequest:
     properties:
       databases:
@@ -147,6 +291,56 @@ definitions:
         type: array
       regenerateNames:
         type: boolean
+    type: object
+  dao.RestoreMapping:
+    properties:
+      databaseName:
+        type: string
+      microserviceName:
+        type: string
+      namespace:
+        type: string
+      prefix:
+        type: string
+    required:
+    - databaseName
+    - microserviceName
+    - namespace
+    type: object
+  dao.RestoreResponse:
+    properties:
+      blobPath:
+        type: string
+      completionTime:
+        type: string
+      creationTime:
+        type: string
+      databases:
+        items:
+          $ref: '#/definitions/dao.LogicalDatabaseRestore'
+        type: array
+      errorMessage:
+        type: string
+      restoreId:
+        type: string
+      status:
+        $ref: '#/definitions/dao.BackupRestoreStatus'
+      storageName:
+        type: string
+    required:
+    - blobPath
+    - creationTime
+    - databases
+    - restoreId
+    - status
+    - storageName
+    type: object
+  dao.ServerErrorResponse:
+    properties:
+      error:
+        type: string
+      requestId:
+        type: string
     type: object
   dao.UserCreateRequest:
     properties:
@@ -171,8 +365,9 @@ definitions:
 info:
   contact: {}
   title: Dbaas adapter API
+  version: "1.0"
 paths:
-  /{appName}/backups/{backupId}:
+  /api/{apiVersion}/dbaas/adapter/{appName}/backups/{backupId}:
     delete:
       consumes:
       - application/json
@@ -215,10 +410,12 @@ paths:
           description: Unknown error
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Evict backup
       tags:
       - Backup and Restore
-  /{appName}/backups/{backupId}/restoration:
+  /api/{apiVersion}/dbaas/adapter/{appName}/backups/{backupId}/restoration:
     post:
       consumes:
       - application/json
@@ -273,10 +470,12 @@ paths:
             databases in it
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Restore backup
       tags:
       - Backup and Restore
-  /{appName}/backups/{backupId}/restore:
+  /api/{apiVersion}/dbaas/adapter/{appName}/backups/{backupId}/restore:
     post:
       consumes:
       - application/json
@@ -290,7 +489,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/dao.DbInfo'
+            type: string
           type: array
       - default: postgresql
         description: Application name
@@ -340,10 +539,256 @@ paths:
             databases in it
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Restore backup
       tags:
       - Backup and Restore
-  /{appName}/backups/collect:
+  /api/{apiVersion}/dbaas/adapter/{appName}/backups/backup:
+    post:
+      consumes:
+      - application/json
+      description: Initiates a backup of specified databases and stores it in the
+        configured storage. The operation is asynchronous and returns immediately
+        with current status of backup.
+      parameters:
+      - default: postgresql
+        description: Application name
+        enum:
+        - postgresql
+        - arangodb
+        - clickhouse
+        - mongodb
+        - cassandra
+        in: path
+        name: appName
+        required: true
+        type: string
+      - default: v2
+        description: API version of dbaas adapter
+        enum:
+        - v1
+        - v2
+        in: path
+        name: apiVersion
+        required: true
+        type: string
+      - description: Backup configuration details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dao.CreateBackupRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Backup operation accepted and is being processed
+          schema:
+            $ref: '#/definitions/dao.BackupResponse'
+        "400":
+          description: The request was invalid or cannot be served
+          schema:
+            $ref: '#/definitions/dao.BadRequestResponse'
+        "401":
+          description: Authentication is required and has failed or has not been provided
+          schema:
+            type: string
+        "403":
+          description: The request was valid, but the server is refusing action
+          schema:
+            type: string
+        "404":
+          description: The requested resource could not be found
+          schema:
+            type: string
+        "500":
+          description: An unexpected error occurred on the server
+          schema:
+            $ref: '#/definitions/dao.ServerErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Initiate database backup
+      tags:
+      - Backup and Restore
+  /api/{apiVersion}/dbaas/adapter/{appName}/backups/backup/{backupId}:
+    delete:
+      description: Delete a backup operation
+      parameters:
+      - default: postgresql
+        description: Application name
+        enum:
+        - postgresql
+        - arangodb
+        - clickhouse
+        - mongodb
+        - cassandra
+        in: path
+        name: appName
+        required: true
+        type: string
+      - default: v2
+        description: API version of dbaas adapter
+        enum:
+        - v1
+        - v2
+        in: path
+        name: apiVersion
+        required: true
+        type: string
+      - description: Unique identifier of the backup operation
+        format: uuid
+        in: path
+        name: backupId
+        required: true
+        type: string
+      - description: Backup or restore blob path
+        in: query
+        name: blobPath
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Backup deleted successfully
+        "404":
+          description: The requested resource could not be found
+          schema:
+            type: string
+        "500":
+          description: An unexpected error occurred on the server
+          schema:
+            $ref: '#/definitions/dao.ServerErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Delete backup
+      tags:
+      - Backup and Restore
+    get:
+      description: Retrieve details about a specific backup operation
+      parameters:
+      - default: postgresql
+        description: Application name
+        enum:
+        - postgresql
+        - arangodb
+        - clickhouse
+        - mongodb
+        - cassandra
+        in: path
+        name: appName
+        required: true
+        type: string
+      - default: v2
+        description: API version of dbaas adapter
+        enum:
+        - v1
+        - v2
+        in: path
+        name: apiVersion
+        required: true
+        type: string
+      - description: Unique identifier of the backup operation
+        format: uuid
+        in: path
+        name: backupId
+        required: true
+        type: string
+      - description: Backup or restore blob path
+        in: query
+        name: blobPath
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Backup details retrieved successfully
+          schema:
+            $ref: '#/definitions/dao.BackupResponse'
+        "404":
+          description: The requested resource could not be found
+          schema:
+            type: string
+        "500":
+          description: An unexpected error occurred on the server
+          schema:
+            $ref: '#/definitions/dao.ServerErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Get backup details
+      tags:
+      - Backup and Restore
+  /api/{apiVersion}/dbaas/adapter/{appName}/backups/backup/{backupId}/restore:
+    post:
+      consumes:
+      - application/json
+      description: Restores databases from a previously created backup. Supports dry-run
+        mode to validate the restore operation without making changes. The operation
+        is asynchronous and returns immediately with current status of restore.
+      parameters:
+      - default: postgresql
+        description: Application name
+        enum:
+        - postgresql
+        - arangodb
+        - clickhouse
+        - mongodb
+        - cassandra
+        in: path
+        name: appName
+        required: true
+        type: string
+      - default: v2
+        description: API version of dbaas adapter
+        enum:
+        - v1
+        - v2
+        in: path
+        name: apiVersion
+        required: true
+        type: string
+      - description: Unique identifier of the backup to restore from
+        format: uuid
+        in: path
+        name: backupId
+        required: true
+        type: string
+      - default: false
+        description: If true, validates the restore operation without making any changes
+        in: query
+        name: dryRun
+        type: boolean
+      - description: Restore configuration details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dao.CreateRestoreRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Restore operation accepted and is being processed
+          schema:
+            $ref: '#/definitions/dao.RestoreResponse'
+        "400":
+          description: The request was invalid or cannot be served
+          schema:
+            $ref: '#/definitions/dao.BadRequestResponse'
+        "404":
+          description: The requested resource could not be found
+          schema:
+            type: string
+        "500":
+          description: An unexpected error occurred on the server
+          schema:
+            $ref: '#/definitions/dao.ServerErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Restore databases from backup
+      tags:
+      - Backup and Restore
+  /api/{apiVersion}/dbaas/adapter/{appName}/backups/collect:
     post:
       consumes:
       - application/json
@@ -390,10 +835,119 @@ paths:
           description: Unknown error
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Collect backup
       tags:
       - Backup and Restore
-  /{appName}/backups/track/backup/{trackId}:
+  /api/{apiVersion}/dbaas/adapter/{appName}/backups/restore/{restoreId}:
+    delete:
+      description: Delete a restore operation
+      parameters:
+      - default: postgresql
+        description: Application name
+        enum:
+        - postgresql
+        - arangodb
+        - clickhouse
+        - mongodb
+        - cassandra
+        in: path
+        name: appName
+        required: true
+        type: string
+      - default: v2
+        description: API version of dbaas adapter
+        enum:
+        - v1
+        - v2
+        in: path
+        name: apiVersion
+        required: true
+        type: string
+      - description: Unique identifier of the restore operation
+        format: uuid
+        in: path
+        name: restoreId
+        required: true
+        type: string
+      - description: Backup or restore blob path
+        in: query
+        name: blobPath
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Restore deleted successfully
+        "404":
+          description: The requested resource could not be found
+          schema:
+            type: string
+        "500":
+          description: An unexpected error occurred on the server
+          schema:
+            $ref: '#/definitions/dao.ServerErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Delete restore
+      tags:
+      - Backup and Restore
+    get:
+      description: Retrieves details of a restore operation
+      parameters:
+      - default: postgresql
+        description: Application name
+        enum:
+        - postgresql
+        - arangodb
+        - clickhouse
+        - mongodb
+        - cassandra
+        in: path
+        name: appName
+        required: true
+        type: string
+      - default: v2
+        description: API version of dbaas adapter
+        enum:
+        - v1
+        - v2
+        in: path
+        name: apiVersion
+        required: true
+        type: string
+      - description: Unique identifier of the restore operation
+        format: uuid
+        in: path
+        name: restoreId
+        required: true
+        type: string
+      - description: Backup or restore blob path
+        in: query
+        name: blobPath
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Restore details retrieved successfully
+          schema:
+            $ref: '#/definitions/dao.RestoreResponse'
+        "404":
+          description: The requested resource could not be found
+          schema:
+            type: string
+        "500":
+          description: An unexpected error occurred on the server
+          schema:
+            $ref: '#/definitions/dao.ServerErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Get restore details
+      tags:
+      - Backup and Restore
+  /api/{apiVersion}/dbaas/adapter/{appName}/backups/track/backup/{trackId}:
     get:
       description: Return status of backup task
       parameters:
@@ -434,10 +988,12 @@ paths:
           description: Unknown error
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Track backup
       tags:
       - Backup and Restore
-  /{appName}/backups/track/restore/{trackId}:
+  /api/{apiVersion}/dbaas/adapter/{appName}/backups/track/restore/{trackId}:
     get:
       description: Return status of restore task
       parameters:
@@ -478,10 +1034,12 @@ paths:
           description: Unknown error
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Track restore
       tags:
       - Backup and Restore
-  /{appName}/databases:
+  /api/{apiVersion}/dbaas/adapter/{appName}/databases:
     get:
       description: Returns list with names of databases
       parameters:
@@ -519,6 +1077,8 @@ paths:
           description: Error occurred while databases listing.
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: List of all databases
       tags:
       - Database administration
@@ -567,10 +1127,12 @@ paths:
           description: Provided parameters does not meet the requirements
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Create database
       tags:
       - Database administration
-  /{appName}/databases/{dbName}/metadata:
+  /api/{apiVersion}/dbaas/adapter/{appName}/databases/{dbName}/metadata:
     put:
       consumes:
       - application/json
@@ -620,10 +1182,12 @@ paths:
           description: Error was occurred during update metadata.
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Update database metadata
       tags:
       - Database administration
-  /{appName}/databases/{dbName}/migrate-to-vault/{userName}:
+  /api/{apiVersion}/dbaas/adapter/{appName}/databases/{dbName}/migrate-to-vault/{userName}:
     post:
       consumes:
       - application/json
@@ -671,10 +1235,12 @@ paths:
           description: Unknown error
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Migrate DB password to vault
       tags:
       - Database administration
-  /{appName}/describe/databases:
+  /api/{apiVersion}/dbaas/adapter/{appName}/describe/databases:
     post:
       consumes:
       - application/json
@@ -731,10 +1297,12 @@ paths:
           description: Error occurred while databases describe.
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Describe databases
       tags:
       - Database administration
-  /{appName}/physical_database:
+  /api/{apiVersion}/dbaas/adapter/{appName}/physical_database:
     get:
       consumes:
       - application/json
@@ -773,10 +1341,12 @@ paths:
           description: Identifier is not specified
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Physical database information
       tags:
       - Database administration
-  /{appName}/resources/bulk-drop:
+  /api/{apiVersion}/dbaas/adapter/{appName}/resources/bulk-drop:
     post:
       consumes:
       - application/json
@@ -820,10 +1390,42 @@ paths:
             items:
               $ref: '#/definitions/dao.DbResource'
             type: array
+      security:
+      - BasicAuth: []
       summary: Drop created resources
       tags:
       - Database administration
-  /{appName}/users:
+  /api/{apiVersion}/dbaas/adapter/{appName}/supports:
+    get:
+      parameters:
+      - default: v2
+        description: API version
+        enum:
+        - v1
+        - v2
+        in: path
+        name: apiVersion
+        required: true
+        type: string
+      - default: postgresql
+        description: Application name
+        in: path
+        name: appName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+      summary: Get supported adapter capabilities
+      tags:
+      - Database administration
+  /api/{apiVersion}/dbaas/adapter/{appName}/users:
     put:
       consumes:
       - application/json
@@ -869,10 +1471,12 @@ paths:
           description: Error occurred while user creation.
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Create user
       tags:
       - Database administration
-  /{appName}/users/{name}:
+  /api/{apiVersion}/dbaas/adapter/{appName}/users/{name}:
     put:
       consumes:
       - application/json
@@ -923,10 +1527,12 @@ paths:
           description: Error occurred while user creation.
           schema:
             type: string
+      security:
+      - BasicAuth: []
       summary: Create user
       tags:
       - Database administration
-  /physical_database/force_registration:
+  /api/{apiVersion}/dbaas/adapter/physical_database/force_registration:
     get:
       description: |-
         Force this adapter to immediately register itself in dbaas-aggregator.
@@ -951,4 +1557,31 @@ paths:
       summary: Force physical database registration
       tags:
       - Common dbaas adapter operations
+  /health:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dao.Health'
+      summary: Get adapter health status
+      tags:
+      - Monitoring
+  /metrics:
+    get:
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Prometheus metrics
+          schema:
+            type: string
+      summary: Get Prometheus metrics
+      tags:
+      - Monitoring
+securityDefinitions:
+  BasicAuth:
+    type: basic
 swagger: "2.0"

@@ -2,11 +2,12 @@
     "swagger": "2.0",
     "info": {
         "title": "Dbaas adapter API",
-        "contact": {}
+        "contact": {},
+        "version": "1.0"
     },
-    "basePath": "/api/{apiVersion}/dbaas/adapter",
+    "basePath": "/",
     "paths": {
-        "/physical_database/force_registration": {
+        "/api/{apiVersion}/dbaas/adapter/physical_database/force_registration": {
             "get": {
                 "description": "Force this adapter to immediately register itself in dbaas-aggregator.\nAdapter initiates background task that tries to register physical database in dbaas-aggregator,\nand responds with status 202 before the background task finishes.",
                 "tags": [
@@ -37,8 +38,362 @@
                 }
             }
         },
-        "/{appName}/backups/collect": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/backups/backup": {
             "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Initiates a backup of specified databases and stores it in the configured storage. The operation is asynchronous and returns immediately with current status of backup.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Backup and Restore"
+                ],
+                "summary": "Initiate database backup",
+                "parameters": [
+                    {
+                        "enum": [
+                            "postgresql",
+                            "arangodb",
+                            "clickhouse",
+                            "mongodb",
+                            "cassandra"
+                        ],
+                        "type": "string",
+                        "default": "postgresql",
+                        "description": "Application name",
+                        "name": "appName",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "v1",
+                            "v2"
+                        ],
+                        "type": "string",
+                        "default": "v2",
+                        "description": "API version of dbaas adapter",
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Backup configuration details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dao.CreateBackupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Backup operation accepted and is being processed",
+                        "schema": {
+                            "$ref": "#/definitions/dao.BackupResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "The request was invalid or cannot be served",
+                        "schema": {
+                            "$ref": "#/definitions/dao.BadRequestResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication is required and has failed or has not been provided",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "The request was valid, but the server is refusing action",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "The requested resource could not be found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "An unexpected error occurred on the server",
+                        "schema": {
+                            "$ref": "#/definitions/dao.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/{apiVersion}/dbaas/adapter/{appName}/backups/backup/{backupId}": {
+            "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Retrieve details about a specific backup operation",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Backup and Restore"
+                ],
+                "summary": "Get backup details",
+                "parameters": [
+                    {
+                        "enum": [
+                            "postgresql",
+                            "arangodb",
+                            "clickhouse",
+                            "mongodb",
+                            "cassandra"
+                        ],
+                        "type": "string",
+                        "default": "postgresql",
+                        "description": "Application name",
+                        "name": "appName",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "v1",
+                            "v2"
+                        ],
+                        "type": "string",
+                        "default": "v2",
+                        "description": "API version of dbaas adapter",
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Unique identifier of the backup operation",
+                        "name": "backupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Backup or restore blob path",
+                        "name": "blobPath",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Backup details retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dao.BackupResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "The requested resource could not be found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "An unexpected error occurred on the server",
+                        "schema": {
+                            "$ref": "#/definitions/dao.ServerErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Delete a backup operation",
+                "tags": [
+                    "Backup and Restore"
+                ],
+                "summary": "Delete backup",
+                "parameters": [
+                    {
+                        "enum": [
+                            "postgresql",
+                            "arangodb",
+                            "clickhouse",
+                            "mongodb",
+                            "cassandra"
+                        ],
+                        "type": "string",
+                        "default": "postgresql",
+                        "description": "Application name",
+                        "name": "appName",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "v1",
+                            "v2"
+                        ],
+                        "type": "string",
+                        "default": "v2",
+                        "description": "API version of dbaas adapter",
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Unique identifier of the backup operation",
+                        "name": "backupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Backup or restore blob path",
+                        "name": "blobPath",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Backup deleted successfully"
+                    },
+                    "404": {
+                        "description": "The requested resource could not be found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "An unexpected error occurred on the server",
+                        "schema": {
+                            "$ref": "#/definitions/dao.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/{apiVersion}/dbaas/adapter/{appName}/backups/backup/{backupId}/restore": {
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Restores databases from a previously created backup. Supports dry-run mode to validate the restore operation without making changes. The operation is asynchronous and returns immediately with current status of restore.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Backup and Restore"
+                ],
+                "summary": "Restore databases from backup",
+                "parameters": [
+                    {
+                        "enum": [
+                            "postgresql",
+                            "arangodb",
+                            "clickhouse",
+                            "mongodb",
+                            "cassandra"
+                        ],
+                        "type": "string",
+                        "default": "postgresql",
+                        "description": "Application name",
+                        "name": "appName",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "v1",
+                            "v2"
+                        ],
+                        "type": "string",
+                        "default": "v2",
+                        "description": "API version of dbaas adapter",
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Unique identifier of the backup to restore from",
+                        "name": "backupId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "If true, validates the restore operation without making any changes",
+                        "name": "dryRun",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Restore configuration details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dao.CreateRestoreRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Restore operation accepted and is being processed",
+                        "schema": {
+                            "$ref": "#/definitions/dao.RestoreResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "The request was invalid or cannot be served",
+                        "schema": {
+                            "$ref": "#/definitions/dao.BadRequestResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "The requested resource could not be found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "An unexpected error occurred on the server",
+                        "schema": {
+                            "$ref": "#/definitions/dao.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/{apiVersion}/dbaas/adapter/{appName}/backups/collect": {
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Requests database backup daemon to collect backup for specified databases",
                 "consumes": [
                     "application/json"
@@ -107,8 +462,167 @@
                 }
             }
         },
-        "/{appName}/backups/track/backup/{trackId}": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/backups/restore/{restoreId}": {
             "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Retrieves details of a restore operation",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Backup and Restore"
+                ],
+                "summary": "Get restore details",
+                "parameters": [
+                    {
+                        "enum": [
+                            "postgresql",
+                            "arangodb",
+                            "clickhouse",
+                            "mongodb",
+                            "cassandra"
+                        ],
+                        "type": "string",
+                        "default": "postgresql",
+                        "description": "Application name",
+                        "name": "appName",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "v1",
+                            "v2"
+                        ],
+                        "type": "string",
+                        "default": "v2",
+                        "description": "API version of dbaas adapter",
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Unique identifier of the restore operation",
+                        "name": "restoreId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Backup or restore blob path",
+                        "name": "blobPath",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Restore details retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dao.RestoreResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "The requested resource could not be found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "An unexpected error occurred on the server",
+                        "schema": {
+                            "$ref": "#/definitions/dao.ServerErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Delete a restore operation",
+                "tags": [
+                    "Backup and Restore"
+                ],
+                "summary": "Delete restore",
+                "parameters": [
+                    {
+                        "enum": [
+                            "postgresql",
+                            "arangodb",
+                            "clickhouse",
+                            "mongodb",
+                            "cassandra"
+                        ],
+                        "type": "string",
+                        "default": "postgresql",
+                        "description": "Application name",
+                        "name": "appName",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "v1",
+                            "v2"
+                        ],
+                        "type": "string",
+                        "default": "v2",
+                        "description": "API version of dbaas adapter",
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Unique identifier of the restore operation",
+                        "name": "restoreId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Backup or restore blob path",
+                        "name": "blobPath",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Restore deleted successfully"
+                    },
+                    "404": {
+                        "description": "The requested resource could not be found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "An unexpected error occurred on the server",
+                        "schema": {
+                            "$ref": "#/definitions/dao.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/{apiVersion}/dbaas/adapter/{appName}/backups/track/backup/{trackId}": {
+            "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Return status of backup task",
                 "produces": [
                     "application/json"
@@ -169,8 +683,13 @@
                 }
             }
         },
-        "/{appName}/backups/track/restore/{trackId}": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/backups/track/restore/{trackId}": {
             "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Return status of restore task",
                 "produces": [
                     "application/json"
@@ -231,8 +750,13 @@
                 }
             }
         },
-        "/{appName}/backups/{backupId}": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/backups/{backupId}": {
             "delete": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Returns deletion status",
                 "consumes": [
                     "application/json"
@@ -296,8 +820,13 @@
                 }
             }
         },
-        "/{appName}/backups/{backupId}/restoration": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/backups/{backupId}/restoration": {
             "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Requests database backup daemon to restore specified backup with specified databases info",
                 "consumes": [
                     "application/json"
@@ -376,8 +905,13 @@
                 }
             }
         },
-        "/{appName}/backups/{backupId}/restore": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/backups/{backupId}/restore": {
             "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Requests database backup daemon to restore specified backup. Deprecated, please use /restoration endpoint instead",
                 "consumes": [
                     "application/json"
@@ -399,7 +933,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/dao.DbInfo"
+                                "type": "string"
                             }
                         }
                     },
@@ -466,8 +1000,13 @@
                 }
             }
         },
-        "/{appName}/databases": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/databases": {
             "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Returns list with names of databases",
                 "produces": [
                     "application/json"
@@ -524,6 +1063,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Creates database with one user having readWrite role in it and returns connection parameters including credentials.\nAlso in created database provided metadata being inserted in _dbaas_metadata collection.",
                 "consumes": [
                     "application/json"
@@ -589,8 +1133,13 @@
                 }
             }
         },
-        "/{appName}/databases/{dbName}/metadata": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/databases/{dbName}/metadata": {
             "put": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Changes metadata saved in databaase",
                 "consumes": [
                     "application/json"
@@ -664,8 +1213,13 @@
                 }
             }
         },
-        "/{appName}/databases/{dbName}/migrate-to-vault/{userName}": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/databases/{dbName}/migrate-to-vault/{userName}": {
             "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Run migration of DB password to vault and returns vault secret",
                 "consumes": [
                     "application/json"
@@ -736,8 +1290,13 @@
                 }
             }
         },
-        "/{appName}/describe/databases": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/describe/databases": {
             "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Returns info about requested databases, this is optional API",
                 "consumes": [
                     "application/json"
@@ -821,8 +1380,13 @@
                 }
             }
         },
-        "/{appName}/physical_database": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/physical_database": {
             "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Adapter belongs only one database cluster and send own physical database information",
                 "consumes": [
                     "application/json"
@@ -879,8 +1443,13 @@
                 }
             }
         },
-        "/{appName}/resources/bulk-drop": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/resources/bulk-drop": {
             "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Can drop any previously created resources such as user or database",
                 "consumes": [
                     "application/json"
@@ -946,8 +1515,57 @@
                 }
             }
         },
-        "/{appName}/users": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/supports": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Database administration"
+                ],
+                "summary": "Get supported adapter capabilities",
+                "parameters": [
+                    {
+                        "enum": [
+                            "v1",
+                            "v2"
+                        ],
+                        "type": "string",
+                        "default": "v2",
+                        "description": "API version",
+                        "name": "apiVersion",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "postgresql",
+                        "description": "Application name",
+                        "name": "appName",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/{apiVersion}/dbaas/adapter/{appName}/users": {
             "put": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Creates new user for specified database and returns it with connection information,\nor returns already created user if it exists. If database not specified will be used default database.",
                 "consumes": [
                     "application/json"
@@ -1013,8 +1631,13 @@
                 }
             }
         },
-        "/{appName}/users/{name}": {
+        "/api/{apiVersion}/dbaas/adapter/{appName}/users/{name}": {
             "put": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
                 "description": "Creates new user for specified database and returns it with connection information,\nor returns already created user if it exists. If database not specified will be used default database.",
                 "consumes": [
                     "application/json"
@@ -1086,12 +1709,174 @@
                     }
                 }
             }
+        },
+        "/health": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Monitoring"
+                ],
+                "summary": "Get adapter health status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dao.Health"
+                        }
+                    }
+                }
+            }
+        },
+        "/metrics": {
+            "get": {
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "Monitoring"
+                ],
+                "summary": "Get Prometheus metrics",
+                "responses": {
+                    "200": {
+                        "description": "Prometheus metrics",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "dao.BackupDatabaseInfo": {
+            "type": "object",
+            "required": [
+                "databaseName"
+            ],
+            "properties": {
+                "databaseName": {
+                    "type": "string"
+                }
+            }
+        },
+        "dao.BackupResponse": {
+            "type": "object",
+            "required": [
+                "backupId",
+                "blobPath",
+                "creationTime",
+                "databases",
+                "status",
+                "storageName"
+            ],
+            "properties": {
+                "backupId": {
+                    "type": "string"
+                },
+                "blobPath": {
+                    "type": "string"
+                },
+                "completionTime": {
+                    "type": "string"
+                },
+                "creationTime": {
+                    "type": "string"
+                },
+                "databases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dao.LogicalDatabaseBackup"
+                    }
+                },
+                "errorMessage": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/dao.BackupRestoreStatus"
+                },
+                "storageName": {
+                    "type": "string"
+                }
+            }
+        },
+        "dao.BackupRestoreStatus": {
+            "type": "string",
+            "enum": [
+                "notStarted",
+                "inProgress",
+                "completed",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "NotStartedStatus",
+                "InProgressStatus",
+                "CompletedStatus",
+                "FailedStatus"
+            ]
+        },
+        "dao.BadRequestResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
         "dao.ConnectionProperties": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {}
+        },
+        "dao.CreateBackupRequest": {
+            "type": "object",
+            "required": [
+                "blobPath",
+                "databases",
+                "storageName"
+            ],
+            "properties": {
+                "blobPath": {
+                    "type": "string"
+                },
+                "databases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dao.BackupDatabaseInfo"
+                    }
+                },
+                "storageName": {
+                    "type": "string"
+                }
+            }
+        },
+        "dao.CreateRestoreRequest": {
+            "type": "object",
+            "required": [
+                "blobPath",
+                "databases",
+                "storageName"
+            ],
+            "properties": {
+                "blobPath": {
+                    "type": "string"
+                },
+                "databases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dao.RestoreMapping"
+                    }
+                },
+                "storageName": {
+                    "type": "string"
+                }
+            }
         },
         "dao.CreatedUser": {
             "type": "object",
@@ -1193,7 +1978,7 @@
                 },
                 "metadata": {
                     "type": "object",
-                    "additionalProperties": true
+                    "additionalProperties": {}
                 },
                 "namePrefix": {
                     "type": "string"
@@ -1206,7 +1991,7 @@
                 },
                 "settings": {
                     "type": "object",
-                    "additionalProperties": true
+                    "additionalProperties": {}
                 },
                 "username": {
                     "type": "string"
@@ -1279,6 +2064,47 @@
                 "DELETE_FAILED"
             ]
         },
+        "dao.Health": {
+            "type": "object",
+            "properties": {
+                "physicalDatabaseRegistration": {
+                    "$ref": "#/definitions/dao.PhysicalDatabaseRegistrationHealth"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "dao.LogicalDatabaseBackup": {
+            "type": "object",
+            "required": [
+                "databaseName",
+                "status"
+            ],
+            "properties": {
+                "creationTime": {
+                    "type": "string"
+                },
+                "databaseName": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "integer"
+                },
+                "errorMessage": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/dao.BackupRestoreStatus"
+                }
+            }
+        },
         "dao.LogicalDatabaseDescribed": {
             "type": "object",
             "properties": {
@@ -1296,6 +2122,53 @@
                 }
             }
         },
+        "dao.LogicalDatabaseRestore": {
+            "type": "object",
+            "required": [
+                "databaseName",
+                "status"
+            ],
+            "properties": {
+                "creationTime": {
+                    "type": "string"
+                },
+                "databaseName": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "integer"
+                },
+                "errorMessage": {
+                    "type": "string"
+                },
+                "microserviceName": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "prefix": {
+                    "type": "string"
+                },
+                "previousDatabaseName": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/dao.BackupRestoreStatus"
+                }
+            }
+        },
+        "dao.PhysicalDatabaseRegistrationHealth": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "dao.RestorationRequest": {
             "type": "object",
             "properties": {
@@ -1307,6 +2180,79 @@
                 },
                 "regenerateNames": {
                     "type": "boolean"
+                }
+            }
+        },
+        "dao.RestoreMapping": {
+            "type": "object",
+            "required": [
+                "databaseName",
+                "microserviceName",
+                "namespace"
+            ],
+            "properties": {
+                "databaseName": {
+                    "type": "string"
+                },
+                "microserviceName": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "prefix": {
+                    "type": "string"
+                }
+            }
+        },
+        "dao.RestoreResponse": {
+            "type": "object",
+            "required": [
+                "blobPath",
+                "creationTime",
+                "databases",
+                "restoreId",
+                "status",
+                "storageName"
+            ],
+            "properties": {
+                "blobPath": {
+                    "type": "string"
+                },
+                "completionTime": {
+                    "type": "string"
+                },
+                "creationTime": {
+                    "type": "string"
+                },
+                "databases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dao.LogicalDatabaseRestore"
+                    }
+                },
+                "errorMessage": {
+                    "type": "string"
+                },
+                "restoreId": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/dao.BackupRestoreStatus"
+                },
+                "storageName": {
+                    "type": "string"
+                }
+            }
+        },
+        "dao.ServerErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "requestId": {
+                    "type": "string"
                 }
             }
         },
@@ -1340,6 +2286,11 @@
                     }
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
         }
     }
 }
