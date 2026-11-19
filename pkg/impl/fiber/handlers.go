@@ -60,7 +60,7 @@ type DbaasAdapterHandler struct {
 	logger          *zap.Logger
 }
 
-// GetDatabases godoc
+// ForceRegistration godoc
 // @Tags Common dbaas adapter operations
 // @Summary Force physical database registration
 // @Description Force this adapter to immediately register itself in dbaas-aggregator.
@@ -68,7 +68,7 @@ type DbaasAdapterHandler struct {
 // @Description and responds with status 202 before the background task finishes.
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Success 202 {string} Token "if physical database registration process has been started successfully."
-// @Router /physical_database/force_registration [get]
+// @Router /api/{apiVersion}/dbaas/adapter/physical_database/force_registration [get]
 func (h *DbaasAdapterHandler) ForceRegistration(c *fiber.Ctx) error {
 	h.physicalService.ForceRegistration()
 	return c.SendStatus(fiber.StatusAccepted)
@@ -77,13 +77,14 @@ func (h *DbaasAdapterHandler) ForceRegistration(c *fiber.Ctx) error {
 // GetDatabases godoc
 // @Tags Database administration
 // @Summary List of all databases
+// @Security BasicAuth
 // @Description Returns list with names of databases
 // @Produce  json
 // @Success 200 {object} []string "Databases listed"
 // @Failure 500 {string} Token "Error occurred while databases listing."
 // @Param appName path string true "Application name" Enums(postgresql, arangodb, clickhouse, mongodb, cassandra) default(postgresql)
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
-// @Router /{appName}/databases [get]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/databases [get]
 func (h *DbaasAdapterHandler) GetDatabases(c *fiber.Ctx) error {
 	//Get databases list
 	ctx := getRequestContext(c)
@@ -93,6 +94,7 @@ func (h *DbaasAdapterHandler) GetDatabases(c *fiber.Ctx) error {
 // CreateDatabase godoc
 // @Tags Database administration
 // @Summary Create database
+// @Security BasicAuth
 // @Description Creates database with one user having readWrite role in it and returns connection parameters including credentials.
 // @Description Also in created database provided metadata being inserted in _dbaas_metadata collection.
 // @Accept   json
@@ -102,7 +104,7 @@ func (h *DbaasAdapterHandler) GetDatabases(c *fiber.Ctx) error {
 // @Param body body dto.DbCreateRequest true "Create DB body request"
 // @Success 201 {object} dto.DbCreateResponseMultiUser
 // @Failure 400 {string} Token "Provided parameters does not meet the requirements"
-// @Router /{appName}/databases [post]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/databases [post]
 func (h *DbaasAdapterHandler) CreateDatabase(c *fiber.Ctx) error {
 	//Create database
 	requestDb := h.adminService.GetDefaultCreateRequest()
@@ -124,6 +126,7 @@ func (h *DbaasAdapterHandler) CreateDatabase(c *fiber.Ctx) error {
 // bulk-drop godoc
 // @Tags Database administration
 // @Summary Drop created resources
+// @Security BasicAuth
 // @Description Can drop any previously created resources such as user or database
 // @Accept   json
 // @Produce  json
@@ -131,7 +134,7 @@ func (h *DbaasAdapterHandler) CreateDatabase(c *fiber.Ctx) error {
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Param body body []dto.DbResource true "List of resources to drop"
 // @Success 200 {object} []dto.DbResource "Drop successful"
-// @Router /{appName}/resources/bulk-drop [post]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/resources/bulk-drop [post]
 func (h *DbaasAdapterHandler) BulkDrop(c *fiber.Ctx) error {
 	//Delete resources
 	var resources []dto.DbResource
@@ -150,6 +153,7 @@ func (h *DbaasAdapterHandler) BulkDrop(c *fiber.Ctx) error {
 // DescribeDatabases godoc
 // @Tags Database administration
 // @Summary Describe databases
+// @Security BasicAuth
 // @Description Returns info about requested databases, this is optional API
 // @Accept   json
 // @Produce  json
@@ -160,7 +164,7 @@ func (h *DbaasAdapterHandler) BulkDrop(c *fiber.Ctx) error {
 // @Param body body []string true "List of names of databases to describe"
 // @Success 200 {object} map[string]dto.LogicalDatabaseDescribed
 // @Failure 500 {string} Token "Error occurred while databases describe."
-// @Router /{appName}/describe/databases [post]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/describe/databases [post]
 func (h *DbaasAdapterHandler) DescribeDatabases(c *fiber.Ctx) error {
 	var databases []string
 	if len(c.Body()) > 0 {
@@ -179,6 +183,7 @@ func (h *DbaasAdapterHandler) DescribeDatabases(c *fiber.Ctx) error {
 // UpdateMetadata godoc
 // @Tags Database administration
 // @Summary Update database metadata
+// @Security BasicAuth
 // @Description Changes metadata saved in databaase
 // @Accept   json
 // @Produce  json
@@ -188,7 +193,7 @@ func (h *DbaasAdapterHandler) DescribeDatabases(c *fiber.Ctx) error {
 // @Param body body map[string]interface{} true "New metadata"
 // @Success 200 {string} Token "Update metadata was successful"
 // @Failure 500 {string} Token "Error was occurred during update metadata."
-// @Router /{appName}/databases/{dbName}/metadata [put]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/databases/{dbName}/metadata [put]
 func (h *DbaasAdapterHandler) UpdateMetadata(c *fiber.Ctx) error {
 	// Update DB Meta
 	var newMetadata map[string]any
@@ -221,6 +226,7 @@ func createUser(userName string, adminService service.CoreAdministrationServiceI
 // Create user godoc
 // @Tags Database administration
 // @Summary Create user
+// @Security BasicAuth
 // @Description Creates new user for specified database and returns it with connection information,
 // @Description or returns already created user if it exists. If database not specified will be used default database.
 // @Accept   json
@@ -230,7 +236,7 @@ func createUser(userName string, adminService service.CoreAdministrationServiceI
 // @Param body body dto.UserCreateRequest true "Info about user to create"
 // @Success 201 {object} dto.CreatedUser "User created"
 // @Failure 500 {string} Token "Error occurred while user creation."
-// @Router /{appName}/users [put]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/users [put]
 func (h *DbaasAdapterHandler) CreateNewUser(c *fiber.Ctx) error {
 	return createUser("", h.adminService, c)
 }
@@ -238,6 +244,7 @@ func (h *DbaasAdapterHandler) CreateNewUser(c *fiber.Ctx) error {
 // Create user godoc
 // @Tags Database administration
 // @Summary Create user
+// @Security BasicAuth
 // @Description Creates new user for specified database and returns it with connection information,
 // @Description or returns already created user if it exists. If database not specified will be used default database.
 // @Accept   json
@@ -248,7 +255,7 @@ func (h *DbaasAdapterHandler) CreateNewUser(c *fiber.Ctx) error {
 // @Param body body dto.UserCreateRequest true "Info about user to ensure"
 // @Success 201 {object} dto.CreatedUser
 // @Failure 500 {string} Token "Error occurred while user creation."
-// @Router /{appName}/users/{name} [put]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/users/{name} [put]
 func (h *DbaasAdapterHandler) CreateUser(c *fiber.Ctx) error {
 	userName := c.Params("name")
 	return createUser(userName, h.adminService, c)
@@ -257,6 +264,7 @@ func (h *DbaasAdapterHandler) CreateUser(c *fiber.Ctx) error {
 // Physical database registration user godoc
 // @Tags Database administration
 // @Summary Physical database information
+// @Security BasicAuth
 // @Description Adapter belongs only one database cluster and send own physical database information
 // @Accept   json
 // @Produce  json
@@ -264,7 +272,7 @@ func (h *DbaasAdapterHandler) CreateUser(c *fiber.Ctx) error {
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Success 200 {object} service.PhysicalDatabase "Own physical database information"
 // @Failure 404 {string} Token "Identifier is not specified"
-// @Router /{appName}/physical_database [get]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/physical_database [get]
 func (h *DbaasAdapterHandler) PhysicalRegistration(c *fiber.Ctx) error { //TODO Check in dbaas adapter
 	phydb := h.physicalService.GetPhysicalDatabase()
 	if phydb == nil {
@@ -277,6 +285,7 @@ func (h *DbaasAdapterHandler) PhysicalRegistration(c *fiber.Ctx) error { //TODO 
 // Collect backup godoc
 // @Tags Backup and Restore
 // @Summary Collect backup
+// @Security BasicAuth
 // @Description Requests database backup daemon to collect backup for specified databases
 // @Accept  json
 // @Produce json
@@ -285,7 +294,7 @@ func (h *DbaasAdapterHandler) PhysicalRegistration(c *fiber.Ctx) error { //TODO 
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Success 202 {object} dto.DatabaseAdapterBaseTrack
 // @Failure 500 {string} Token "Unknown error"
-// @Router /{appName}/backups/collect [post]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/collect [post]
 func (h *DbaasAdapterHandler) Collect(c *fiber.Ctx) error {
 	var databases []string
 	parserErr := c.BodyParser(&databases)
@@ -305,6 +314,7 @@ func (h *DbaasAdapterHandler) Collect(c *fiber.Ctx) error {
 // Track backup godoc
 // @Tags Backup and Restore
 // @Summary Track backup
+// @Security BasicAuth
 // @Description Return status of backup task
 // @Produce json
 // @Param appName path string true "Application name" Enums(postgresql, arangodb, clickhouse, mongodb, cassandra) default(postgresql)
@@ -312,7 +322,7 @@ func (h *DbaasAdapterHandler) Collect(c *fiber.Ctx) error {
 // @Param trackId path string true "trackId"
 // @Success 200 {object} dto.DatabaseAdapterBaseTrack
 // @Failure 500 {string} Token "Unknown error"
-// @Router /{appName}/backups/track/backup/{trackId} [get]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/track/backup/{trackId} [get]
 func (h *DbaasAdapterHandler) TrackBackup(c *fiber.Ctx) error {
 	trackId := c.Params("trackId")
 	ctx := getRequestContext(c)
@@ -327,6 +337,7 @@ func (h *DbaasAdapterHandler) TrackBackup(c *fiber.Ctx) error {
 // Track restore godoc
 // @Tags Backup and Restore
 // @Summary Track restore
+// @Security BasicAuth
 // @Description Return status of restore task
 // @Produce json
 // @Param appName path string true "Application name" Enums(postgresql, arangodb, clickhouse, mongodb, cassandra) default(postgresql)
@@ -334,7 +345,7 @@ func (h *DbaasAdapterHandler) TrackBackup(c *fiber.Ctx) error {
 // @Param trackId path string true "trackId"
 // @Success 200 {object} dto.DatabaseAdapterBaseTrack
 // @Failure 500 {string} Token "Unknown error"
-// @Router /{appName}/backups/track/restore/{trackId} [get]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/track/restore/{trackId} [get]
 func (h *DbaasAdapterHandler) TrackRestore(c *fiber.Ctx) error {
 	trackId := c.Params("trackId")
 	ctx := getRequestContext(c)
@@ -349,6 +360,7 @@ func (h *DbaasAdapterHandler) TrackRestore(c *fiber.Ctx) error {
 // Restore backup godoc
 // @Tags Backup and Restore
 // @Summary Restore backup
+// @Security BasicAuth
 // @Description Requests database backup daemon to restore specified backup with specified databases info
 // @Accept   json
 // @Produce  json
@@ -359,7 +371,7 @@ func (h *DbaasAdapterHandler) TrackRestore(c *fiber.Ctx) error {
 // @Success 202 {object} dto.DatabaseAdapterRestoreTrack "Restore requested"
 // @Failure 500 {string} Token "Unknown error"
 // @Failure 501 {string} Token "Cannot restore backup without explicitly specified list of databases in it"
-// @Router /{appName}/backups/{backupId}/restoration [post]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/{backupId}/restoration [post]
 func (h *DbaasAdapterHandler) Restoration(c *fiber.Ctx) error {
 	var request dto.RestorationRequest
 	parserErr := c.BodyParser(&request)
@@ -389,10 +401,11 @@ func (h *DbaasAdapterHandler) Restoration(c *fiber.Ctx) error {
 // Restore backup godoc
 // @Tags Backup and Restore
 // @Summary Restore backup
+// @Security BasicAuth
 // @Description Requests database backup daemon to restore specified backup. Deprecated, please use /restoration endpoint instead
 // @Accept   json
 // @Produce  json
-// @Param body body []dto.DbInfo true "List of database names for restore"
+// @Param body body []string true "List of database names for restore"
 // @Param appName path string true "Application name" Enums(postgresql, arangodb, clickhouse, mongodb, cassandra) default(postgresql)
 // @Param apiVersion path string true "API version of dbaas adapter" Enums(v1, v2) default(v2)
 // @Param backupId path string true "Backup identifier"
@@ -400,7 +413,7 @@ func (h *DbaasAdapterHandler) Restoration(c *fiber.Ctx) error {
 // @Success 202 {object} dto.DatabaseAdapterRestoreTrack
 // @Failure 500 {string} Token "Unknown error"
 // @Failure 501 {string} Token "Cannot restore backup without explicitly specified list of databases in it"
-// @Router /{appName}/backups/{backupId}/restore [post]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/{backupId}/restore [post]
 // @Deprecated
 func (h *DbaasAdapterHandler) Restore(c *fiber.Ctx) error {
 	var databases []string
@@ -437,6 +450,7 @@ func (h *DbaasAdapterHandler) Restore(c *fiber.Ctx) error {
 // Evict backup godoc
 // @Tags Backup and Restore
 // @Summary Evict backup
+// @Security BasicAuth
 // @Description Returns deletion status
 // @Accept   json
 // @Produce  json
@@ -445,7 +459,7 @@ func (h *DbaasAdapterHandler) Restore(c *fiber.Ctx) error {
 // @Param backupId path string true "trackId"
 // @Success 200 {string} Token "Succesfull delete"
 // @Failure 500 {string} Token "Unknown error"
-// @Router /{appName}/backups/{backupId} [delete]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/backups/{backupId} [delete]
 func (h *DbaasAdapterHandler) DeleteBackup(c *fiber.Ctx) error {
 	backupId := c.Params("backupId")
 	ctx := getRequestContext(c)
@@ -460,6 +474,7 @@ func (h *DbaasAdapterHandler) DeleteBackup(c *fiber.Ctx) error {
 // Migrate DB password to vault godoc
 // @Tags Database administration
 // @Summary Migrate DB password to vault
+// @Security BasicAuth
 // @Description Run migration of DB password to vault and returns vault secret
 // @Accept   json
 // @Produce  plain
@@ -469,7 +484,7 @@ func (h *DbaasAdapterHandler) DeleteBackup(c *fiber.Ctx) error {
 // @Param userName path string true "User whose password should be migrated"
 // @Success 200 {string} string "Vault role name"
 // @Failure 500 {string} Token "Unknown error"
-// @Router /{appName}/databases/{dbName}/migrate-to-vault/{userName} [post]
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/databases/{dbName}/migrate-to-vault/{userName} [post]
 func (h *DbaasAdapterHandler) MigrateToVault(c *fiber.Ctx) error {
 	ctx := getRequestContext(c)
 	roleName, err := h.adminService.MigrateToVault(ctx, c.Params("dbName"), c.Params("userName"))
@@ -478,6 +493,40 @@ func (h *DbaasAdapterHandler) MigrateToVault(c *fiber.Ctx) error {
 	}
 	return c.SendString(roleName)
 }
+
+// GetSupports godoc
+// @Summary Get supported adapter capabilities
+// @Tags Database administration
+// @Produce json
+// @Param apiVersion path string true "API version" Enums(v1, v2) default(v2)
+// @Param appName path string true "Application name" default(postgresql)
+// @Success 200 {object} map[string]bool
+// @Router /api/{apiVersion}/dbaas/adapter/{appName}/supports [get]
+func getSupportsHandler(supports map[string]bool) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		return c.JSON(supports)
+	}
+}
+
+// GetHealth godoc
+// @Summary Get adapter health status
+// @Tags Monitoring
+// @Produce json
+// @Success 200 {object} dto.Health
+// @Router /health [get]
+func getHealthHandler(health *dto.Health) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		return c.JSON(health)
+	}
+}
+
+// Metrics godoc
+// @Summary Get Prometheus metrics
+// @Tags Monitoring
+// @Produce plain
+// @Success 200 {string} string "Prometheus metrics"
+// @Router /metrics [get]
+func documentMetrics() {}
 
 func locationPath(rootPath string, trackPath string, taskId string) string {
 	return rootPath + trackPath + taskId
@@ -503,7 +552,9 @@ func getRequestContext(c *fiber.Ctx) context.Context {
 var once sync.Once
 
 // @title Dbaas adapter API
-// @BasePath /api/{apiVersion}/dbaas/adapter
+// @version 1.0
+// @BasePath /
+// @securityDefinitions.basic BasicAuth
 func BuildFiberDBaaSAdapterHandlers(
 	app *fiber.App,
 	user string,
@@ -569,9 +620,7 @@ func BuildFiberDBaaSAdapterHandlers(
 		return c.Next()
 	})
 
-	database.Get("/supports", func(c *fiber.Ctx) error {
-		return c.JSON(supportCopy)
-	})
+	database.Get("/supports", getSupportsHandler(supportCopy))
 
 	database.Use(basicauth.New(basicauth.Config{
 		Realm: "This API is for using by dbaas aggregator only",
@@ -653,7 +702,5 @@ func BuildFiberDBaaSAdapterHandlers(
 		physicalService.StartRegister()
 		health.PhysicalDatabaseRegistration = &physicalService.Health
 	}
-	app.Get("/health", func(c *fiber.Ctx) error {
-		return c.JSON(&health)
-	})
+	app.Get("/health", getHealthHandler(&health))
 }
